@@ -1689,7 +1689,7 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
             <Bell className="w-5 h-5" />
           </button>
           <div
-            onClick={handleGoChannel}
+            onClick={() => handleGoChannel()}
             title="Click to view channel"
             className="w-8 h-8 rounded-full bg-rose-200 text-rose-900 font-bold text-xs flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-rose-300 transition"
           >
@@ -1737,7 +1737,7 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
               You
             </span>
             <button
-              onClick={handleGoChannel}
+              onClick={() => handleGoChannel()}
               className={`w-full flex items-center space-x-5 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
                 viewMode === "channel"
                   ? "bg-gray-100 text-gray-900 font-bold"
