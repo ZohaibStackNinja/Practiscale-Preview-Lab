@@ -358,7 +358,7 @@ export default function ProjectWorkspacePage() {
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
         projectId={projectId}
-        activeVariantId={activeVariant?._id}
+        activeVariantId={activeVariant?._id || project?.variants?.[0]?._id}
         platform={currentPlatform}
         device={device}
       />

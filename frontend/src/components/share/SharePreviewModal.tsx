@@ -113,6 +113,8 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
       })
     : "";
 
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 select-none animate-fadeIn">
       <div className="bg-white rounded-3xl border border-gray-200 w-full max-w-md p-6 shadow-2xl relative space-y-5">
@@ -138,10 +140,11 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
               type="text"
               readOnly
               value={
-                activeShareUrl ||
-                shareData?.shareUrl ||
-                (loading ? "Generating preview link..." : "")
+                loading
+                  ? "Generating preview link..."
+                  : activeShareUrl || shareData?.shareUrl || ""
               }
+              placeholder={loading ? "Generating preview link..." : ""}
               className="flex-1 bg-transparent px-3 text-xs font-mono text-gray-800 outline-none truncate"
             />
             <button
@@ -151,7 +154,7 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
                 loading ||
                 shareData?.isRevoked
               }
-              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition active:scale-95 shadow-xs ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition active:scale-95 shadow-xs disabled:opacity-40 disabled:cursor-not-allowed ${
                 copied
                   ? "bg-emerald-600 text-white shadow-emerald-500/20"
                   : "bg-gradient-to-r from-[#0ABAB5] to-[#089793] hover:from-[#099E9A] hover:to-[#078581] text-white"
@@ -204,7 +207,7 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
                 <AlertTriangle className="w-4 h-4" />
                 <span>Link Revoked</span>
               </div>
-            ) : (
+            ) : shareData ? (
               <div>
                 <div className="flex items-center space-x-1.5 text-emerald-700 text-xs font-bold">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -216,7 +219,12 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
                   </p>
                 )}
               </div>
-            )}
+            ) : loading ? (
+              <div className="flex items-center space-x-1.5 text-gray-500 text-xs font-medium">
+                <span className="w-2 h-2 rounded-full bg-[#0ABAB5] animate-pulse" />
+                <span>Generating preview link...</span>
+              </div>
+            ) : null}
           </div>
 
           <button
