@@ -53,12 +53,29 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
     createOrFetch();
   }, [isOpen, projectId, activeVariantId, durationHours, platform, device]);
 
-  if (!isOpen) return null;
+  // Dynamically resolve share URL against current browser origin (e.g. https://practiscale-preview.vercel.app)
+  const getCleanShareUrl = (): string => {
+    if (!shareData) return "";
+    const origin =
+      typeof window !== "undefined" && window.location.origin
+        ? window.location.origin
+        : "";
+    if (origin && shareData.rawToken) {
+      return `${origin}/share/${shareData.rawToken}`;
+    }
+    if (origin && shareData.shareUrl) {
+      return shareData.shareUrl.replace(/^https?:\/\/[^/]+/, origin);
+    }
+    return shareData.shareUrl || "";
+  };
+
+  const activeShareUrl = getCleanShareUrl();
 
   const handleCopy = async () => {
-    if (!shareData?.shareUrl) return;
+    const urlToCopy = activeShareUrl || shareData?.shareUrl;
+    if (!urlToCopy) return;
     try {
-      await navigator.clipboard.writeText(shareData.shareUrl);
+      await navigator.clipboard.writeText(urlToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
@@ -121,6 +138,7 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
               type="text"
               readOnly
               value={
+                activeShareUrl ||
                 shareData?.shareUrl ||
                 (loading ? "Generating preview link..." : "")
               }
@@ -128,7 +146,11 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
             />
             <button
               onClick={handleCopy}
-              disabled={!shareData?.shareUrl || loading || shareData?.isRevoked}
+              disabled={
+                (!activeShareUrl && !shareData?.shareUrl) ||
+                loading ||
+                shareData?.isRevoked
+              }
               className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition active:scale-95 shadow-xs ${
                 copied
                   ? "bg-emerald-600 text-white shadow-emerald-500/20"
