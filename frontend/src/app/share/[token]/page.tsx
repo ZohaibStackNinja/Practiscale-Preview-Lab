@@ -68,6 +68,30 @@ export default function SharedReviewPage() {
     };
 
     fetchShare();
+
+    // ⚡ Live background polling for client comments every 3.5 seconds
+    const interval = setInterval(async () => {
+      try {
+        const freshComments = await api.getComments(token);
+        setSnapshot((prev) => {
+          if (!prev) return null;
+          if (
+            prev.comments.length === freshComments.length &&
+            prev.comments.every((c, i) => c._id === freshComments[i]?._id)
+          ) {
+            return prev;
+          }
+          return {
+            ...prev,
+            comments: freshComments,
+          };
+        });
+      } catch {
+        // ignore background poll errors
+      }
+    }, 3500);
+
+    return () => clearInterval(interval);
   }, [token]);
 
   const handleCommentAdded = (newComment: CommentItem) => {

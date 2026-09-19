@@ -14,7 +14,7 @@ import { TikTokSimulator } from "@/components/simulator/TikTokSimulator";
 import { LinkedInSimulator } from "@/components/simulator/LinkedInSimulator";
 import { SharePreviewModal } from "@/components/share/SharePreviewModal";
 import { AddVariantModal } from "@/components/variants/AddVariantModal";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare, ArrowRight, X } from "lucide-react";
 
 const VALID_PLATFORMS: Platform[] = [
   "youtube",
@@ -52,6 +52,12 @@ export default function ProjectWorkspacePage() {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isAddVariantOpen, setIsAddVariantOpen] = useState(false);
 
+  // Live real-time comments toast & tracking
+  const [newCommentToast, setNewCommentToast] = useState<CommentItem | null>(
+    null,
+  );
+  const initialCommentsLoadedRef = useRef(false);
+
   // Hidden file inputs for direct simulator click uploads
   const simBannerInputRef = useRef<HTMLInputElement>(null);
   const simLogoInputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +69,30 @@ export default function ProjectWorkspacePage() {
     if (!projectId) return;
     try {
       const data = await api.getProjectComments(projectId);
-      setComments(data);
+      setComments((prev) => {
+        // If this is a live background update and a new comment was received, show a toast notification
+        if (initialCommentsLoadedRef.current && data.length > prev.length) {
+          const newest = data[0];
+          if (newest && !prev.some((c) => c._id === newest._id)) {
+            setNewCommentToast(newest);
+            setTimeout(() => {
+              setNewCommentToast((curr) =>
+                curr?._id === newest._id ? null : curr,
+              );
+            }, 6000);
+          }
+        }
+        initialCommentsLoadedRef.current = true;
+
+        // Skip re-render if comments array is identical
+        if (
+          prev.length === data.length &&
+          prev.every((c, i) => c._id === data[i]?._id)
+        ) {
+          return prev;
+        }
+        return data;
+      });
     } catch {
       // ignore
     }
@@ -89,10 +118,28 @@ export default function ProjectWorkspacePage() {
   };
 
   useEffect(() => {
-    if (projectId) {
-      loadProject();
+    if (!projectId) return;
+
+    loadProject();
+    loadComments();
+
+    // ⚡ Live background polling for client reviews every 3.5 seconds
+    const interval = setInterval(() => {
       loadComments();
-    }
+    }, 3500);
+
+    // ⚡ Instant refresh when user refocuses the tab / window
+    const handleFocus = () => {
+      loadComments();
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
   }, [projectId]);
 
   // Platform navigation
@@ -350,6 +397,7 @@ export default function ProjectWorkspacePage() {
           uploadingSlot={uploadingSlot}
           activeTab={insightsTab}
           onTabChange={(t) => setInsightsTab(t)}
+          onRefreshComments={loadComments}
         />
       </div>
 
@@ -370,6 +418,52 @@ export default function ProjectWorkspacePage() {
         projectId={projectId}
         onVariantAdded={handleVariantAdded}
       />
+
+      {/* Real-time Floating Live Comment Notification Toast */}
+      {newCommentToast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-fadeIn">
+          <div className="bg-gray-900/95 backdrop-blur-md text-white border border-[#0ABAB5]/40 rounded-2xl p-4 shadow-2xl max-w-sm flex items-start space-x-3 transition ring-1 ring-[#0ABAB5]/20">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0ABAB5] to-[#089793] flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-sm">
+              <MessageSquare className="w-4 h-4 text-white stroke-[2.5]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-teal-300 truncate">
+                  New review from {newCommentToast.displayName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setNewCommentToast(null)}
+                  className="text-gray-400 hover:text-white transition p-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <p className="text-xs text-gray-200 mt-1 line-clamp-2">
+                &ldquo;{newCommentToast.body}&rdquo;
+              </p>
+              <div className="mt-2.5 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInsightsTab("reviews");
+                    setNewCommentToast(null);
+                  }}
+                  className="text-[11px] font-extrabold text-[#0ABAB5] hover:text-teal-200 flex items-center space-x-1 transition"
+                >
+                  <span>Open Client Reviews</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+                <span className="text-[10px] text-gray-400 font-mono">
+                  {newCommentToast.device === "mobile"
+                    ? "📱 Mobile"
+                    : "💻 Desktop"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

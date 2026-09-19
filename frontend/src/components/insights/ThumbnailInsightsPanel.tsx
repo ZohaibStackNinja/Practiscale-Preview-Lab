@@ -45,6 +45,7 @@ interface ThumbnailInsightsPanelProps {
   uploadingSlot?: string | null;
   activeTab?: "tracker" | "insights" | "variants" | "reviews";
   onTabChange?: (tab: "tracker" | "insights" | "variants" | "reviews") => void;
+  onRefreshComments?: () => Promise<void> | void;
 }
 
 export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
@@ -61,6 +62,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
   uploadingSlot,
   activeTab: controlledTab,
   onTabChange,
+  onRefreshComments,
 }) => {
   const [internalTab, setInternalTab] = useState<
     "tracker" | "insights" | "variants" | "reviews"
@@ -818,6 +820,23 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                 <p className="text-[10px] text-gray-400 font-medium mt-0.5">
                   Feedback sent by clients from Review Mode
                 </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Live Sync</span>
+                </div>
+                {onRefreshComments && (
+                  <button
+                    type="button"
+                    onClick={() => onRefreshComments()}
+                    className="p-1 text-gray-400 hover:text-[#0ABAB5] hover:bg-teal-50 rounded-lg transition"
+                    title="Refresh reviews now"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
