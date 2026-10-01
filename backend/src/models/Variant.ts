@@ -1,7 +1,15 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+export type PlatformType =
+  | "youtube"
+  | "instagram"
+  | "facebook"
+  | "tiktok"
+  | "linkedin";
+
 export interface IVariant extends Document {
   projectId: mongoose.Types.ObjectId;
+  platform: PlatformType;
   name: string;
   assetId: mongoose.Types.ObjectId;
   notes?: string;
@@ -17,6 +25,12 @@ const VariantSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Project",
       required: true,
+      index: true,
+    },
+    platform: {
+      type: String,
+      enum: ["youtube", "instagram", "facebook", "tiktok", "linkedin"],
+      default: "youtube",
       index: true,
     },
     name: {

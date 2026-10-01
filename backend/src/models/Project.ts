@@ -1,9 +1,24 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+export type PlatformType =
+  | "youtube"
+  | "instagram"
+  | "facebook"
+  | "tiktok"
+  | "linkedin";
+
+export interface IPlatformAssets {
+  logoUrl?: string;
+  bannerUrl?: string;
+  shortFrameUrl?: string;
+}
+
 export interface IProject extends Document {
   title: string;
   ownerSessionId?: string;
   activeVariantId?: mongoose.Types.ObjectId;
+  activeVariantIds?: Partial<Record<PlatformType, mongoose.Types.ObjectId>>;
+  platformAssets?: Partial<Record<PlatformType, IPlatformAssets>>;
   status: "draft" | "active" | "archived";
   logoUrl?: string;
   bannerUrl?: string;
@@ -11,6 +26,15 @@ export interface IProject extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+const PlatformAssetsSubSchema = new Schema(
+  {
+    logoUrl: { type: String },
+    bannerUrl: { type: String },
+    shortFrameUrl: { type: String },
+  },
+  { _id: false },
+);
 
 const ProjectSchema: Schema = new Schema(
   {
@@ -28,6 +52,20 @@ const ProjectSchema: Schema = new Schema(
     activeVariantId: {
       type: Schema.Types.ObjectId,
       ref: "Variant",
+    },
+    activeVariantIds: {
+      youtube: { type: Schema.Types.ObjectId, ref: "Variant" },
+      instagram: { type: Schema.Types.ObjectId, ref: "Variant" },
+      facebook: { type: Schema.Types.ObjectId, ref: "Variant" },
+      tiktok: { type: Schema.Types.ObjectId, ref: "Variant" },
+      linkedin: { type: Schema.Types.ObjectId, ref: "Variant" },
+    },
+    platformAssets: {
+      youtube: { type: PlatformAssetsSubSchema, default: () => ({}) },
+      instagram: { type: PlatformAssetsSubSchema, default: () => ({}) },
+      facebook: { type: PlatformAssetsSubSchema, default: () => ({}) },
+      tiktok: { type: PlatformAssetsSubSchema, default: () => ({}) },
+      linkedin: { type: PlatformAssetsSubSchema, default: () => ({}) },
     },
     status: {
       type: String,

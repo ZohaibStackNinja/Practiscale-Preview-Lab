@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IShareLink extends Document {
   projectId: mongoose.Types.ObjectId;
-  variantId: mongoose.Types.ObjectId;
+  variantId?: mongoose.Types.ObjectId | null;
   platform: "youtube" | "instagram" | "facebook" | "tiktok" | "linkedin";
   device: "desktop" | "mobile";
   context?: string;
@@ -26,7 +26,8 @@ const ShareLinkSchema: Schema = new Schema(
     variantId: {
       type: Schema.Types.ObjectId,
       ref: "Variant",
-      required: true,
+      required: false,
+      default: null,
     },
     platform: {
       type: String,
@@ -70,7 +71,6 @@ const ShareLinkSchema: Schema = new Schema(
   },
 );
 
-// TTL index to automatically clean up documents long after expiry (optional helper)
 ShareLinkSchema.index(
   { expiresAt: 1 },
   { expireAfterSeconds: 60 * 60 * 24 * 7 },
