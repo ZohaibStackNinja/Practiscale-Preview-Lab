@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { Variant, Project, CommentItem, Device } from "@/lib/types";
+import {
+  Variant,
+  Project,
+  CommentItem,
+  Device,
+  Platform,
+  PlatformAssets,
+} from "@/lib/types";
 import {
   Check,
   X,
@@ -23,15 +30,78 @@ import {
   RefreshCw,
   AlertTriangle,
 } from "lucide-react";
+import { formatVariantLabel, formatSlotFriendlyName } from "@/lib/api";
 import {
   analyzeThumbnailImage,
   ThumbnailInsightResult,
 } from "@/lib/thumbnailAnalyzer";
 
+interface PlatformSpecConfig {
+  badgeLabel: string;
+  primaryTitle: string;
+  primaryDim: string;
+  logoTitle: string;
+  logoDim: string;
+  bannerTitle?: string;
+  bannerDim?: string;
+  shortTitle?: string;
+  shortDim?: string;
+}
+
+const PLATFORM_SPECS: Record<Platform, PlatformSpecConfig> = {
+  youtube: {
+    badgeLabel: "YouTube Specs",
+    primaryTitle: "Video Thumbnail",
+    primaryDim: "1280 × 720 (16:9)",
+    logoTitle: "Channel Logo",
+    logoDim: "800 × 800 (1:1)",
+    bannerTitle: "Channel Banner",
+    bannerDim: "2560 × 1440 (16:9)",
+  },
+  instagram: {
+    badgeLabel: "Instagram Specs",
+    primaryTitle: "Feed Post Creative",
+    primaryDim: "1080 × 1080 (1:1) / 4:5",
+    logoTitle: "Profile Avatar",
+    logoDim: "320 × 320 (1:1)",
+    shortTitle: "Instagram Reel / Story",
+    shortDim: "1080 × 1920 (9:16)",
+  },
+  facebook: {
+    badgeLabel: "Facebook Specs",
+    primaryTitle: "Feed Post Creative",
+    primaryDim: "1200 × 630 (1.91:1)",
+    logoTitle: "Page Profile Picture",
+    logoDim: "360 × 360 (1:1)",
+    bannerTitle: "Page Cover Photo",
+    bannerDim: "820 × 312 (Cover)",
+    shortTitle: "Facebook Reel / Story",
+    shortDim: "1080 × 1920 (9:16)",
+  },
+  tiktok: {
+    badgeLabel: "TikTok Specs",
+    primaryTitle: "TikTok Video Cover",
+    primaryDim: "1080 × 1920 (9:16)",
+    logoTitle: "Creator Avatar",
+    logoDim: "200 × 200 (1:1)",
+  },
+  linkedin: {
+    badgeLabel: "LinkedIn Specs",
+    primaryTitle: "Sponsored Post Image",
+    primaryDim: "1200 × 627 (1.91:1)",
+    logoTitle: "Company Logo",
+    logoDim: "400 × 400 (1:1)",
+    bannerTitle: "Company Cover Banner",
+    bannerDim: "1128 × 191 (Banner)",
+  },
+};
+
 interface ThumbnailInsightsPanelProps {
   variants: Variant[];
   activeVariant: Variant | null;
   project?: Project | null;
+  currentPlatform?: Platform;
+  platformAssets?: PlatformAssets;
   comments?: CommentItem[];
   currentDevice?: Device;
   onSwitchDevice?: (device: Device) => void;
@@ -52,6 +122,8 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
   variants,
   activeVariant,
   project,
+  currentPlatform = "youtube",
+  platformAssets,
   comments = [],
   currentDevice = "desktop",
   onSwitchDevice,
@@ -73,7 +145,9 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
   const [insights, setInsights] = useState<ThumbnailInsightResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Live Thumbnail Image Analysis on variant change
+  const spec = PLATFORM_SPECS[currentPlatform] || PLATFORM_SPECS.youtube;
+
+  // Live Thumbnail Image Analysis on variant or platform change
   useEffect(() => {
     let isCancelled = false;
     if (activeVariant?.asset?.secureUrl) {
@@ -83,6 +157,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
         activeVariant.width,
         activeVariant.height,
         activeVariant.name,
+        currentPlatform,
       ).then((res) => {
         if (!isCancelled) {
           setInsights(res);
@@ -100,6 +175,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
     activeVariant?.asset?.secureUrl,
     activeVariant?._id,
     activeVariant?.name,
+    currentPlatform,
   ]);
 
   const handleReanalyze = () => {
@@ -110,6 +186,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
       activeVariant.width,
       activeVariant.height,
       activeVariant.name,
+      currentPlatform,
     ).then((res) => {
       setInsights(res);
       setIsAnalyzing(false);
@@ -136,13 +213,21 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
   ) => {
     if (e.target.files && e.target.files[0] && onUploadAsset) {
       onUploadAsset(type, e.target.files[0]);
+      e.target.value = "";
     }
   };
 
+  const resolvedAssets = platformAssets || {
+    logoUrl: currentPlatform === "youtube" ? project?.logoUrl : undefined,
+    bannerUrl: currentPlatform === "youtube" ? project?.bannerUrl : undefined,
+    shortFrameUrl:
+      currentPlatform === "youtube" ? project?.shortFrameUrl : undefined,
+  };
+
   const hasThumbnail = Boolean(activeVariant?.asset?.secureUrl);
-  const hasLogo = Boolean(project?.logoUrl);
-  const hasBanner = Boolean(project?.bannerUrl);
-  const hasShortFrame = Boolean(project?.shortFrameUrl);
+  const hasLogo = Boolean(resolvedAssets.logoUrl);
+  const hasBanner = Boolean(resolvedAssets.bannerUrl);
+  const hasShortFrame = Boolean(resolvedAssets.shortFrameUrl);
 
   return (
     <aside className="w-[360px] bg-white border-l border-gray-200 flex flex-col h-full shrink-0 select-none overflow-hidden shadow-xs">
@@ -188,7 +273,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
             <span>Back to Workspace</span>
           </button>
           <div className="flex items-center space-x-1.5">
-            <MessageSquare className="w-3.5 h-3.5 text-[#0ABAB5]" />
+            <MessageSquare className="w-3.5 h-3.5 text-[#00A67E]" />
             <span className="text-xs font-extrabold text-gray-900">
               Client Reviews
             </span>
@@ -209,7 +294,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
               onClick={() => handleTabClick("variants")}
               className={`group relative flex-1 flex items-center justify-center gap-1.5 py-3.5 px-2 text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "variants"
-                  ? "text-[#089793]"
+                  ? "text-[#008B68]"
                   : "text-gray-500 hover:text-gray-900 hover:bg-gray-50/80 rounded-t-lg"
               }`}
               title="Creative Variants"
@@ -217,7 +302,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
               <Layers
                 className={`w-3.5 h-3.5 shrink-0 transition-colors ${
                   activeTab === "variants"
-                    ? "text-[#0ABAB5]"
+                    ? "text-[#00A67E]"
                     : "text-gray-400 group-hover:text-gray-600"
                 }`}
               />
@@ -225,14 +310,14 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
               <span
                 className={`px-1.5 py-0.5 text-[10px] font-extrabold rounded-full leading-none transition-colors ${
                   activeTab === "variants"
-                    ? "bg-[#0ABAB5]/15 text-[#089793]"
+                    ? "bg-[#00A67E]/15 text-[#008B68]"
                     : "bg-gray-100 text-gray-500 group-hover:bg-gray-200"
                 }`}
               >
                 {variants.length}
               </span>
               {activeTab === "variants" && (
-                <span className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#0ABAB5] rounded-full" />
+                <span className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#00A67E] rounded-full" />
               )}
             </button>
 
@@ -242,7 +327,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
               onClick={() => handleTabClick("insights")}
               className={`group relative flex-1 flex items-center justify-center gap-1.5 py-3.5 px-2 text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "insights"
-                  ? "text-[#089793]"
+                  ? "text-[#008B68]"
                   : "text-gray-500 hover:text-gray-900 hover:bg-gray-50/80 rounded-t-lg"
               }`}
               title="Thumbnail Insights & Scores"
@@ -250,13 +335,13 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
               <BarChart3
                 className={`w-3.5 h-3.5 shrink-0 transition-colors ${
                   activeTab === "insights"
-                    ? "text-[#0ABAB5]"
+                    ? "text-[#00A67E]"
                     : "text-gray-400 group-hover:text-gray-600"
                 }`}
               />
               <span>Insights</span>
               {activeTab === "insights" && (
-                <span className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#0ABAB5] rounded-full" />
+                <span className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#00A67E] rounded-full" />
               )}
             </button>
 
@@ -266,7 +351,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
               onClick={() => handleTabClick("tracker")}
               className={`group relative flex-1 flex items-center justify-center gap-1.5 py-3.5 px-2 text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === "tracker"
-                  ? "text-[#089793]"
+                  ? "text-[#008B68]"
                   : "text-gray-500 hover:text-gray-900 hover:bg-gray-50/80 rounded-t-lg"
               }`}
               title="Asset Specs & Tracker"
@@ -274,13 +359,13 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
               <CheckCircle2
                 className={`w-3.5 h-3.5 shrink-0 transition-colors ${
                   activeTab === "tracker"
-                    ? "text-[#0ABAB5]"
+                    ? "text-[#00A67E]"
                     : "text-gray-400 group-hover:text-gray-600"
                 }`}
               />
               <span>Specs</span>
               {activeTab === "tracker" && (
-                <span className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#0ABAB5] rounded-full" />
+                <span className="absolute bottom-0 left-2 right-2 h-[2.5px] bg-[#00A67E] rounded-full" />
               )}
             </button>
           </nav>
@@ -296,19 +381,22 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
               <h3 className="font-extrabold text-sm text-gray-900">
                 Asset Tracker
               </h3>
-              <span className="text-[10px] font-bold text-[#089793] bg-teal-50 border border-teal-200/80 px-2.5 py-0.5 rounded-full">
-                YouTube Specs
+              <span className="text-[10px] font-bold text-[#008B68] bg-teal-50 border border-teal-200/80 px-2.5 py-0.5 rounded-full">
+                {spec.badgeLabel}
               </span>
             </div>
 
             <p className="text-[11px] text-gray-500 leading-relaxed">
-              Click any asset slot to upload or replace it in your live
-              simulator.
+              Assets uploaded here apply{" "}
+              <span className="font-bold text-gray-700">
+                only to {spec.badgeLabel.replace(" Specs", "")}
+              </span>{" "}
+              and will never overwrite other platforms or vertical formats.
             </p>
 
             {/* Polished Asset Cards */}
             <div className="space-y-2.5">
-              {/* 1. Thumbnail Card */}
+              {/* 1. Primary Creative Card */}
               <div
                 onClick={() => thumbnailInputRef.current?.click()}
                 className="p-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50/80 hover:border-gray-300 transition-all flex items-center justify-between group cursor-pointer shadow-xs hover:shadow-sm"
@@ -322,7 +410,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                     }`}
                   >
                     {uploadingSlot === "thumbnail" ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-[#0ABAB5]" />
+                      <Loader2 className="w-4 h-4 animate-spin text-[#00A67E]" />
                     ) : hasThumbnail ? (
                       <Check className="w-4 h-4 stroke-[2.5]" />
                     ) : (
@@ -331,11 +419,11 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-gray-900 flex items-center space-x-1.5">
-                      <span>Thumbnail</span>
-                      <Upload className="w-3 h-3 text-[#0ABAB5] opacity-0 group-hover:opacity-100 transition" />
+                      <span>{spec.primaryTitle}</span>
+                      <Upload className="w-3 h-3 text-[#00A67E] opacity-0 group-hover:opacity-100 transition" />
                     </h4>
                     <p className="text-[10px] text-gray-400 font-medium">
-                      1280 × 720 (16:9)
+                      {spec.primaryDim}
                     </p>
                   </div>
                 </div>
@@ -351,7 +439,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                 </span>
               </div>
 
-              {/* 2. Channel Logo Card */}
+              {/* 2. Profile / Channel Logo Card */}
               <div
                 onClick={() => logoInputRef.current?.click()}
                 className="p-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50/80 hover:border-gray-300 transition-all flex items-center justify-between group cursor-pointer shadow-xs hover:shadow-sm"
@@ -365,7 +453,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                     }`}
                   >
                     {uploadingSlot === "logo" ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-[#0ABAB5]" />
+                      <Loader2 className="w-4 h-4 animate-spin text-[#00A67E]" />
                     ) : hasLogo ? (
                       <Check className="w-4 h-4 stroke-[2.5]" />
                     ) : (
@@ -374,11 +462,11 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-gray-900 flex items-center space-x-1.5">
-                      <span>Channel Logo</span>
-                      <Upload className="w-3 h-3 text-[#0ABAB5] opacity-0 group-hover:opacity-100 transition" />
+                      <span>{spec.logoTitle}</span>
+                      <Upload className="w-3 h-3 text-[#00A67E] opacity-0 group-hover:opacity-100 transition" />
                     </h4>
                     <p className="text-[10px] text-gray-400 font-medium">
-                      800 × 800 (1:1)
+                      {spec.logoDim}
                     </p>
                   </div>
                 </div>
@@ -394,113 +482,111 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                 </span>
               </div>
 
-              {/* 3. Channel Banner Card */}
-              <div
-                onClick={() => bannerInputRef.current?.click()}
-                className="p-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50/80 hover:border-gray-300 transition-all flex items-center justify-between group cursor-pointer shadow-xs hover:shadow-sm"
-              >
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border transition group-hover:scale-105 ${
+              {/* 3. Banner Card (only if platform has a cover/banner) */}
+              {spec.bannerTitle && (
+                <div
+                  onClick={() => bannerInputRef.current?.click()}
+                  className="p-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50/80 hover:border-gray-300 transition-all flex items-center justify-between group cursor-pointer shadow-xs hover:shadow-sm"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border transition group-hover:scale-105 ${
+                        hasBanner
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-200/80"
+                          : "bg-rose-50 text-rose-500 border-rose-200/80"
+                      }`}
+                    >
+                      {uploadingSlot === "banner" ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-[#00A67E]" />
+                      ) : hasBanner ? (
+                        <Check className="w-4 h-4 stroke-[2.5]" />
+                      ) : (
+                        <X className="w-4 h-4 stroke-[2.5]" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900 flex items-center space-x-1.5">
+                        <span>{spec.bannerTitle}</span>
+                        <Upload className="w-3 h-3 text-[#00A67E] opacity-0 group-hover:opacity-100 transition" />
+                      </h4>
+                      <p className="text-[10px] text-gray-400 font-medium">
+                        {spec.bannerDim}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
                       hasBanner
-                        ? "bg-emerald-50 text-emerald-600 border-emerald-200/80"
-                        : "bg-rose-50 text-rose-500 border-rose-200/80"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200/70"
+                        : "bg-rose-50 text-rose-700 border-rose-200/70"
                     }`}
                   >
-                    {uploadingSlot === "banner" ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-[#0ABAB5]" />
-                    ) : hasBanner ? (
-                      <Check className="w-4 h-4 stroke-[2.5]" />
-                    ) : (
-                      <X className="w-4 h-4 stroke-[2.5]" />
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900 flex items-center space-x-1.5">
-                      <span>Channel Banner</span>
-                      <Upload className="w-3 h-3 text-[#0ABAB5] opacity-0 group-hover:opacity-100 transition" />
-                    </h4>
-                    <p className="text-[10px] text-gray-400 font-medium">
-                      2560 × 1440 (16:9)
-                    </p>
-                  </div>
+                    {hasBanner ? "Uploaded" : "Missing"}
+                  </span>
                 </div>
+              )}
 
-                <span
-                  className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                    hasBanner
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200/70"
-                      : "bg-rose-50 text-rose-700 border-rose-200/70"
-                  }`}
+              {/* 4. Separate Vertical 9:16 Short / Reel Card (only if platform has separate 9:16 slot) */}
+              {spec.shortTitle && (
+                <div
+                  onClick={() => shortFrameInputRef.current?.click()}
+                  className="p-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50/80 hover:border-gray-300 transition-all flex items-center justify-between group cursor-pointer shadow-xs hover:shadow-sm"
                 >
-                  {hasBanner ? "Uploaded" : "Missing"}
-                </span>
-              </div>
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border transition group-hover:scale-105 ${
+                        hasShortFrame
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-200/80"
+                          : "bg-rose-50 text-rose-500 border-rose-200/80"
+                      }`}
+                    >
+                      {uploadingSlot === "shortFrame" ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-[#00A67E]" />
+                      ) : hasShortFrame ? (
+                        <Check className="w-4 h-4 stroke-[2.5]" />
+                      ) : (
+                        <X className="w-4 h-4 stroke-[2.5]" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900 flex items-center space-x-1.5">
+                        <span>{spec.shortTitle}</span>
+                        <Upload className="w-3 h-3 text-[#00A67E] opacity-0 group-hover:opacity-100 transition" />
+                      </h4>
+                      <p className="text-[10px] text-gray-400 font-medium">
+                        {spec.shortDim}
+                      </p>
+                    </div>
+                  </div>
 
-              {/* 4. Short Frame Card */}
-              <div
-                onClick={() => shortFrameInputRef.current?.click()}
-                className="p-3 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50/80 hover:border-gray-300 transition-all flex items-center justify-between group cursor-pointer shadow-xs hover:shadow-sm"
-              >
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border transition group-hover:scale-105 ${
+                  <span
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
                       hasShortFrame
-                        ? "bg-emerald-50 text-emerald-600 border-emerald-200/80"
-                        : "bg-rose-50 text-rose-500 border-rose-200/80"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200/70"
+                        : "bg-rose-50 text-rose-700 border-rose-200/70"
                     }`}
                   >
-                    {uploadingSlot === "shortFrame" ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-[#0ABAB5]" />
-                    ) : hasShortFrame ? (
-                      <Check className="w-4 h-4 stroke-[2.5]" />
-                    ) : (
-                      <X className="w-4 h-4 stroke-[2.5]" />
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900 flex items-center space-x-1.5">
-                      <span>Short Frame</span>
-                      <Upload className="w-3 h-3 text-[#0ABAB5] opacity-0 group-hover:opacity-100 transition" />
-                    </h4>
-                    <p className="text-[10px] text-gray-400 font-medium">
-                      1080 × 1920 (9:16)
-                    </p>
-                  </div>
+                    {hasShortFrame ? "Uploaded" : "Missing"}
+                  </span>
                 </div>
-
-                <span
-                  className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                    hasShortFrame
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200/70"
-                      : "bg-rose-50 text-rose-700 border-rose-200/70"
-                  }`}
-                >
-                  {hasShortFrame ? "Uploaded" : "Missing"}
-                </span>
-              </div>
+              )}
             </div>
 
             {/* Beautified Action Button */}
             <div className="pt-2">
               <button
                 onClick={() => {
-                  if (!hasBanner) bannerInputRef.current?.click();
-                  else if (!hasShortFrame) shortFrameInputRef.current?.click();
-                  else if (!hasLogo) logoInputRef.current?.click();
+                  if (!hasThumbnail) thumbnailInputRef.current?.click();
                   else onAddVariantClick();
                 }}
-                className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-[#0ABAB5] to-[#089793] hover:from-[#099E9A] hover:to-[#078581] text-white shadow-xs hover:shadow-sm transition-all flex items-center justify-center space-x-2 active:scale-[0.98]"
+                className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-[#00A67E] hover:bg-[#008B68] text-white shadow-xs hover:shadow-sm transition-all flex items-center justify-center space-x-2 active:scale-[0.98]"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>
-                  {!hasBanner
-                    ? "Upload Channel Banner"
-                    : !hasShortFrame
-                      ? "Upload Short Frame"
-                      : !hasLogo
-                        ? "Upload Channel Logo"
-                        : "Add New Variant"}
+                  {!hasThumbnail
+                    ? `Upload ${spec.primaryTitle}`
+                    : `Add ${spec.badgeLabel.replace(" Specs", "")} Variant`}
                 </span>
               </button>
             </div>
@@ -513,30 +599,34 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
             {!activeVariant?.asset?.secureUrl ? (
               /* Empty State: No Thumbnail Uploaded */
               <div className="p-6 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/60 space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#0ABAB5] flex items-center justify-center mx-auto border border-teal-200/60 shadow-2xs">
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#00A67E] flex items-center justify-center mx-auto border border-teal-200/60 shadow-2xs">
                   <BarChart3 className="w-6 h-6" />
                 </div>
                 <div>
                   <h4 className="text-xs font-extrabold text-gray-900">
-                    No Thumbnail Uploaded
+                    No {spec.primaryTitle} Uploaded
                   </h4>
                   <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">
-                    Upload or select a creative variant to generate real-time
-                    contrast, legibility, and safe-zone insights.
+                    Upload a creative variant for{" "}
+                    <span className="font-bold text-gray-700">
+                      {spec.badgeLabel.replace(" Specs", "")}
+                    </span>{" "}
+                    to generate real-time contrast, legibility, and safe-zone
+                    insights.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => thumbnailInputRef.current?.click()}
-                  className="py-2 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#0ABAB5] to-[#089793] hover:from-[#099E9A] hover:to-[#078581] shadow-xs cursor-pointer transition active:scale-95"
+                  className="py-2 px-4 rounded-xl text-xs font-bold text-white bg-[#00A67E] hover:bg-[#008B68] shadow-xs cursor-pointer transition active:scale-95"
                 >
-                  Upload Thumbnail
+                  Upload {spec.primaryTitle}
                 </button>
               </div>
             ) : isAnalyzing && !insights ? (
               /* Scanning / Analyzing Loader */
               <div className="p-8 text-center border border-gray-200 rounded-2xl bg-white space-y-3 shadow-xs">
-                <Loader2 className="w-8 h-8 text-[#0ABAB5] animate-spin mx-auto" />
+                <Loader2 className="w-8 h-8 text-[#00A67E] animate-spin mx-auto" />
                 <div>
                   <h4 className="text-xs font-extrabold text-gray-900">
                     Analyzing Visual Dynamics...
@@ -567,12 +657,12 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                     type="button"
                     onClick={handleReanalyze}
                     disabled={isAnalyzing}
-                    className="text-[11px] font-bold text-[#089793] hover:text-[#0ABAB5] flex items-center space-x-1 bg-teal-50 hover:bg-teal-100/80 px-2.5 py-1 rounded-lg border border-teal-200/60 transition active:scale-95 cursor-pointer disabled:opacity-50"
+                    className="text-[11px] font-bold text-[#008B68] hover:text-[#00A67E] flex items-center space-x-1 bg-teal-50 hover:bg-teal-100/80 px-2.5 py-1 rounded-lg border border-teal-200/60 transition active:scale-95 cursor-pointer disabled:opacity-50"
                     title="Re-run image pixel analysis"
                   >
                     <RefreshCw
                       className={`w-3 h-3 ${
-                        isAnalyzing ? "animate-spin text-[#0ABAB5]" : ""
+                        isAnalyzing ? "animate-spin text-[#00A67E]" : ""
                       }`}
                     />
                     <span>{isAnalyzing ? "Scanning..." : "Re-test"}</span>
@@ -713,8 +803,8 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                 {/* Performance Recommendations Box */}
                 {insights.recommendations.length > 0 && (
                   <div className="p-3.5 bg-gradient-to-br from-teal-50/70 to-emerald-50/50 rounded-2xl border border-teal-200/70 shadow-2xs space-y-2">
-                    <div className="flex items-center space-x-1.5 text-xs font-extrabold text-[#089793]">
-                      <Sparkles className="w-3.5 h-3.5 text-[#0ABAB5]" />
+                    <div className="flex items-center space-x-1.5 text-xs font-extrabold text-[#008B68]">
+                      <Sparkles className="w-3.5 h-3.5 text-[#00A67E]" />
                       <span>Visual Recommendations</span>
                     </div>
                     <ul className="space-y-1.5 text-[11px] text-gray-700">
@@ -723,7 +813,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                           key={idx}
                           className="flex items-start space-x-1.5 leading-relaxed"
                         >
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#0ABAB5] shrink-0 mt-1.5" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#00A67E] shrink-0 mt-1.5" />
                           <span>{rec}</span>
                         </li>
                       ))}
@@ -740,69 +830,140 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-extrabold text-sm text-gray-900">
-                Variants ({variants.length})
+                {spec.badgeLabel.replace(" Specs", "")} Variants (
+                {variants.length})
               </h3>
               <button
                 onClick={onAddVariantClick}
-                className="text-xs font-bold text-[#089793] hover:text-[#0ABAB5] flex items-center space-x-1"
+                className="text-xs font-bold text-[#008B68] hover:text-[#00A67E] flex items-center space-x-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Variant</span>
               </button>
             </div>
 
-            <div className="space-y-2">
-              {variants.map((v) => {
-                const isSelected = activeVariant?._id === v._id;
-                return (
-                  <div
-                    key={v._id}
-                    onClick={() => onSelectVariant(v._id)}
-                    className={`p-2.5 rounded-2xl border cursor-pointer transition flex items-center space-x-3 ${
-                      isSelected
-                        ? "border-[#0ABAB5] bg-[#0ABAB5]/5 shadow-sm ring-1 ring-[#0ABAB5]/30"
-                        : "border-gray-200 bg-white hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-slate-900 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
-                      {v.asset?.secureUrl ? (
-                        <img
-                          src={v.asset.secureUrl}
-                          alt={v.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-[10px] text-gray-400">Asset</span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-gray-900 truncate">
-                        {v.name}
-                      </p>
-                      <p className="text-[10px] text-gray-400 font-medium">
-                        {v.width && v.height
-                          ? `${v.width} × ${v.height}`
-                          : "Custom ratio"}
-                      </p>
-                    </div>
+            {variants.length === 0 ? (
+              <div className="p-6 text-center border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/60 space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#00A67E] flex items-center justify-center mx-auto border border-teal-200/60 shadow-2xs">
+                  <Layers className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-gray-900">
+                    No {spec.badgeLabel.replace(" Specs", "")} Variants Yet
+                  </h4>
+                  <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">
+                    Variants are isolated per platform. Upload an image
+                    specifically for{" "}
+                    <span className="font-bold text-gray-700">
+                      {spec.badgeLabel.replace(" Specs", "")}
+                    </span>
+                    .
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onAddVariantClick}
+                  className="py-2 px-4 rounded-xl text-xs font-bold text-white bg-[#00A67E] hover:bg-[#008B68] shadow-xs cursor-pointer transition active:scale-95"
+                >
+                  + Add {spec.badgeLabel.replace(" Specs", "")} Variant
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {variants.map((v, idx) => {
+                  const isSelected = activeVariant?._id === v._id;
+                  const slotTag = v.notes?.startsWith("slot:")
+                    ? v.notes.replace("slot:", "")
+                    : undefined;
+                  const isPrimarySlot = !slotTag || slotTag === "user-video";
 
-                    {onDeleteVariant && variants.length > 1 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm(`Delete variant "${v.name}"?`)) {
-                            onDeleteVariant(v._id);
-                          }
-                        }}
-                        className="text-gray-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  return (
+                    <div
+                      key={v._id}
+                      onClick={() => onSelectVariant(v._id)}
+                      className={`p-3 rounded-2xl border cursor-pointer transition flex items-center space-x-3 group relative ${
+                        isSelected
+                          ? "border-[#00A67E] bg-[#00A67E]/5 shadow-sm ring-1 ring-[#00A67E]/30"
+                          : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-2xs"
+                      }`}
+                    >
+                      {/* Thumbnail Preview */}
+                      <div className="w-14 h-10 rounded-xl bg-slate-900 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center relative shadow-2xs">
+                        {v.asset?.secureUrl ? (
+                          <img
+                            src={v.asset.secureUrl}
+                            alt={v.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-[10px] text-gray-400 font-bold">
+                            Asset
+                          </span>
+                        )}
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-[#00A67E]/20 border-2 border-[#00A67E] rounded-xl pointer-events-none" />
+                        )}
+                      </div>
+
+                      {/* Info & Slot Badge */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-1.5 flex-wrap gap-y-0.5">
+                          <p className="text-xs font-bold text-gray-900 truncate">
+                            {v.name}
+                          </p>
+                          {isSelected ? (
+                            <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md bg-[#00A67E]/15 text-[#008B68] flex items-center space-x-0.5">
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                              <span>Active</span>
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600">
+                              {isPrimarySlot ? "Primary Slot" : formatSlotFriendlyName(slotTag)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-gray-400 font-medium mt-0.5 truncate">
+                          {isPrimarySlot
+                            ? (v.width && v.height ? `${v.width} × ${v.height} · Main Video` : "Main Video Creative")
+                            : `Uploaded in ${formatSlotFriendlyName(slotTag)}`}
+                        </p>
+                      </div>
+
+                      {/* Actions: Test as Main / Delete */}
+                      <div className="flex items-center space-x-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {!isSelected && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectVariant(v._id);
+                            }}
+                            className="text-[10px] font-extrabold px-2.5 py-1 rounded-lg border border-[#00A67E]/40 hover:border-[#00A67E] bg-teal-50 hover:bg-[#00A67E] text-[#008B68] hover:text-white transition-all cursor-pointer shadow-2xs active:scale-95 flex items-center space-x-1"
+                            title="Set this thumbnail as your active primary video to test in the simulator"
+                          >
+                            <span>Test as Main</span>
+                            <ArrowRight className="w-2.5 h-2.5" />
+                          </button>
+                        )}
+                      {onDeleteVariant && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete variant "${v.name}"?`)) {
+                              onDeleteVariant(v._id);
+                            }
+                          }}
+                          className="text-gray-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -831,7 +992,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => onRefreshComments()}
-                    className="p-1 text-gray-400 hover:text-[#0ABAB5] hover:bg-teal-50 rounded-lg transition"
+                    className="p-1 text-gray-400 hover:text-[#00A67E] hover:bg-teal-50 rounded-lg transition"
                     title="Refresh reviews now"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
@@ -905,7 +1066,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                 return (
                   <div className="flex flex-col items-center justify-center text-center p-6 bg-gray-50 rounded-2xl border border-gray-200/70 space-y-2 text-gray-400 my-4">
                     <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center shadow-2xs">
-                      <MessageSquare className="w-5 h-5 text-[#0ABAB5]" />
+                      <MessageSquare className="w-5 h-5 text-[#00A67E]" />
                     </div>
                     <p className="text-xs font-bold text-gray-800">
                       {comments.length === 0
@@ -994,9 +1155,9 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                           {c.variantName && (
                             <span
                               className="text-[10px] text-gray-400 truncate max-w-[120px]"
-                              title={c.variantName}
+                              title={formatVariantLabel(c.variantName, 0)}
                             >
-                              · {c.variantName}
+                              · {formatVariantLabel(c.variantName, 0)}
                             </span>
                           )}
                         </div>
@@ -1013,7 +1174,7 @@ export const ThumbnailInsightsPanel: React.FC<ThumbnailInsightsPanelProps> = ({
                             onClick={() =>
                               onSwitchDevice(c.device || "desktop")
                             }
-                            className="w-full py-1.5 px-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 text-[#089793] hover:text-[#0ABAB5] text-[11px] font-bold flex items-center justify-between transition cursor-pointer border border-gray-200/60 group"
+                            className="w-full py-1.5 px-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 text-[#008B68] hover:text-[#00A67E] text-[11px] font-bold flex items-center justify-between transition cursor-pointer border border-gray-200/60 group"
                           >
                             <span>
                               Inspect in{" "}
