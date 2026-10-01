@@ -1,9 +1,24 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Project, Variant, Platform, Device, CommentItem } from "@/lib/types";
-import { api } from "@/lib/api";
+import {
+  Project,
+  Variant,
+  Platform,
+  Device,
+  CommentItem,
+  PlatformAssets,
+} from "@/lib/types";
+import {
+  api,
+  getLocalPlatformState,
+  saveLocalPlatformState,
+  formatProjectTitle,
+  formatVariantLabel,
+  formatSlotFriendlyName,
+  DEFAULT_PLATFORM_DUMMY_COPY,
+} from "@/lib/api";
 import { TopNav } from "@/components/shell/TopNav";
 import { PlatformTabBar } from "@/components/shell/PlatformTabBar";
 import { ThumbnailInsightsPanel } from "@/components/insights/ThumbnailInsightsPanel";
@@ -12,6 +27,7 @@ import { InstagramSimulator } from "@/components/simulator/InstagramSimulator";
 import { FacebookSimulator } from "@/components/simulator/FacebookSimulator";
 import { TikTokSimulator } from "@/components/simulator/TikTokSimulator";
 import { LinkedInSimulator } from "@/components/simulator/LinkedInSimulator";
+import { SimulatorCopyControl } from "@/components/simulator/SimulatorCopyControl";
 import { SharePreviewModal } from "@/components/share/SharePreviewModal";
 import { AddVariantModal } from "@/components/variants/AddVariantModal";
 import { Loader2, MessageSquare, ArrowRight, X } from "lucide-react";
@@ -47,6 +63,17 @@ export default function ProjectWorkspacePage() {
   const [error, setError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState("Saved just now");
   const [uploadingSlot, setUploadingSlot] = useState<string | null>(null);
+  const [localPlatformVersion, setLocalPlatformVersion] = useState(0);
+  const [customSlotThumbs, setCustomSlotThumbs] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("practiscale_other_video_thumbs_v1");
+      if (saved) {
+        setCustomSlotThumbs(JSON.parse(saved));
+      }
+    } catch {}
+  }, []);
 
   // Modals
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -64,13 +91,142 @@ export default function ProjectWorkspacePage() {
   const simThumbInputRef = useRef<HTMLInputElement>(null);
   const simShortInputRef = useRef<HTMLInputElement>(null);
 
+  // Helper to resolve which platform a variant belongs to (backend field + localStorage fallback)
+  const resolveVariantPlatform = (
+    v: Variant,
+    localMap: Record<string, Platform>,
+  ): Platform => {
+    if (v.platform && VALID_PLATFORMS.includes(v.platform)) {
+      return v.platform;
+    }
+    if (localMap[v._id] && VALID_PLATFORMS.includes(localMap[v._id])) {
+      return localMap[v._id];
+    }
+    return "youtube";
+  };
+
+  // Strictly filter variants for the current platform ONLY and sanitize any raw image filenames
+  const platformVariants = useMemo(() => {
+    const localState = getLocalPlatformState(projectId);
+    const serverFiltered = (project?.variants || [])
+      .map((v) => ({
+        ...v,
+        platform: resolveVariantPlatform(v, localState.variantPlatforms),
+      }))
+      .filter((v) => v.platform === currentPlatform);
+
+    // Also synthesize any slot thumbnails from customSlotThumbs (e.g. comp-1, comp-2) not yet on server
+    const synthesizedSlotVariants: Variant[] = [];
+    if (currentPlatform === "youtube") {
+      Object.entries(customSlotThumbs).forEach(([slotId, dataUrl]) => {
+        if (!dataUrl) return;
+        const existsOnServer = serverFiltered.some(
+          (v) => v.notes === `slot:${slotId}` || v.asset?.secureUrl === dataUrl
+        );
+        if (!existsOnServer) {
+          const idx = serverFiltered.length + synthesizedSlotVariants.length;
+          synthesizedSlotVariants.push({
+            _id: `local-slot-${slotId}`,
+            projectId,
+            platform: "youtube",
+            name: formatVariantLabel(undefined, idx),
+            notes: `slot:${slotId}`,
+            assetId: `asset-${slotId}`,
+            asset: {
+              provider: "local",
+              cloudinaryPublicId: "",
+              secureUrl: dataUrl,
+              width: 1280,
+              height: 720,
+            },
+            createdAt: new Date().toISOString(),
+          });
+        }
+      });
+    }
+
+    const combined = [...serverFiltered, ...synthesizedSlotVariants];
+    return combined.map((v, idx) => ({
+      ...v,
+      name: formatVariantLabel(v.name, idx),
+    }));
+  }, [project, projectId, currentPlatform, localPlatformVersion, customSlotThumbs]);
+
+  // Custom or Dummy Copy for current platform
+  const currentCustomCopy = useMemo(() => {
+    const localState = getLocalPlatformState(projectId);
+    return localState.customCopy?.[currentPlatform] || {};
+  }, [projectId, currentPlatform, localPlatformVersion]);
+
+  const handleUpdateCustomCopy = (next: {
+    title?: string;
+    channelName?: string;
+  }) => {
+    saveLocalPlatformState(projectId, (prev) => ({
+      ...prev,
+      customCopy: {
+        ...(prev.customCopy || {}),
+        [currentPlatform]: next,
+      },
+    }));
+    setLocalPlatformVersion((v) => v + 1);
+    setSaveStatus("Saved preview text");
+    setTimeout(() => setSaveStatus("Saved just now"), 1200);
+  };
+
+  // Strictly resolve channel/profile assets for the current platform ONLY
+  const currentPlatformAssets: PlatformAssets = useMemo(() => {
+    const localState = getLocalPlatformState(projectId);
+    const fromBackend = project?.platformAssets?.[currentPlatform] || {};
+    const fromLocal = localState.platformAssets?.[currentPlatform] || {};
+    const fallbackYoutube: PlatformAssets =
+      currentPlatform === "youtube"
+        ? {
+            logoUrl: project?.logoUrl,
+            bannerUrl: project?.bannerUrl,
+            shortFrameUrl: project?.shortFrameUrl,
+          }
+        : {};
+    return {
+      logoUrl:
+        fromBackend.logoUrl || fromLocal.logoUrl || fallbackYoutube.logoUrl,
+      bannerUrl:
+        fromBackend.bannerUrl ||
+        fromLocal.bannerUrl ||
+        fallbackYoutube.bannerUrl,
+      shortFrameUrl:
+        fromBackend.shortFrameUrl ||
+        fromLocal.shortFrameUrl ||
+        fallbackYoutube.shortFrameUrl,
+    };
+  }, [project, projectId, currentPlatform, localPlatformVersion]);
+
+  // Keep activeVariant strictly scoped to currentPlatform whenever platform or variants change
+  useEffect(() => {
+    if (!project) return;
+    const localState = getLocalPlatformState(projectId);
+    const preferredId =
+      project.activeVariantsByPlatform?.[currentPlatform]?._id ||
+      project.activeVariantIds?.[currentPlatform] ||
+      localState.activeVariantsByPlatform?.[currentPlatform] ||
+      (currentPlatform === "youtube" ? project.activeVariantId : undefined);
+
+    if (preferredId) {
+      const found = platformVariants.find((v) => v._id === preferredId);
+      if (found) {
+        setActiveVariant(found);
+        return;
+      }
+    }
+    setActiveVariant(platformVariants[0] || null);
+  }, [project, projectId, currentPlatform, platformVariants]);
+
   // Fetch project comments (client reviews)
   const loadComments = async () => {
     if (!projectId) return;
     try {
       const data = await api.getProjectComments(projectId);
       setComments((prev) => {
-        // If this is a live background update and a new comment was received, show a toast notification
         if (initialCommentsLoadedRef.current && data.length > prev.length) {
           const newest = data[0];
           if (newest && !prev.some((c) => c._id === newest._id)) {
@@ -84,7 +240,6 @@ export default function ProjectWorkspacePage() {
         }
         initialCommentsLoadedRef.current = true;
 
-        // Skip re-render if comments array is identical
         if (
           prev.length === data.length &&
           prev.every((c, i) => c._id === data[i]?._id)
@@ -104,11 +259,6 @@ export default function ProjectWorkspacePage() {
       setLoading(true);
       const data = await api.getProject(projectId);
       setProject(data);
-      if (data.activeVariant) {
-        setActiveVariant(data.activeVariant);
-      } else if (data.variants && data.variants.length > 0) {
-        setActiveVariant(data.variants[0]);
-      }
       loadComments();
     } catch (err: any) {
       setError(err.message || "Failed to load project");
@@ -123,12 +273,10 @@ export default function ProjectWorkspacePage() {
     loadProject();
     loadComments();
 
-    // ⚡ Live background polling for client reviews every 3.5 seconds
     const interval = setInterval(() => {
       loadComments();
     }, 3500);
 
-    // ⚡ Instant refresh when user refocuses the tab / window
     const handleFocus = () => {
       loadComments();
     };
@@ -147,15 +295,26 @@ export default function ProjectWorkspacePage() {
     router.push(`/project/${projectId}/${newPlatform}`);
   };
 
-  // Switch active creative variant
+  // Switch active creative variant for currentPlatform only
   const handleSelectVariant = async (variantId: string) => {
     if (!project) return;
-    const chosen = project.variants.find((v) => v._id === variantId);
+    const chosen = platformVariants.find((v) => v._id === variantId);
     if (chosen) {
       setActiveVariant(chosen);
+      saveLocalPlatformState(projectId, (prev) => ({
+        ...prev,
+        activeVariantsByPlatform: {
+          ...prev.activeVariantsByPlatform,
+          [currentPlatform]: variantId,
+        },
+      }));
+      setLocalPlatformVersion((v) => v + 1);
       setSaveStatus("Saving changes...");
       try {
-        await api.updateProject(projectId, { activeVariantId: variantId });
+        await api.updateProject(projectId, {
+          activeVariantId: variantId,
+          platform: currentPlatform,
+        });
         setSaveStatus("Saved just now");
       } catch {
         setSaveStatus("Saved");
@@ -163,7 +322,7 @@ export default function ProjectWorkspacePage() {
     }
   };
 
-  // Direct asset upload handler (banner, logo, shortFrame, thumbnail)
+  // Direct asset upload handler (banner, logo, shortFrame, thumbnail) scoped to currentPlatform
   const handleUploadAsset = async (
     type: "banner" | "logo" | "shortFrame" | "thumbnail",
     file: File,
@@ -176,11 +335,10 @@ export default function ProjectWorkspacePage() {
         projectId,
         file,
         type,
+        currentPlatform,
       );
+      setLocalPlatformVersion((v) => v + 1);
       setProject(updatedProject);
-      if (updatedProject.activeVariant) {
-        setActiveVariant(updatedProject.activeVariant);
-      }
       setSaveStatus("Saved just now");
     } catch (err: any) {
       alert(err.message || `Failed to upload ${type}`);
@@ -203,22 +361,148 @@ export default function ProjectWorkspacePage() {
     }
   };
 
-  // Add new variant
+  // Upload thumbnail for a specific slot and register as a project Variant
+  const handleUploadSlotThumbnail = async (file: File, slotId: string) => {
+    if (!projectId) return;
+    setSaveStatus(`Uploading variant for ${formatSlotFriendlyName(slotId)}...`);
+    try {
+      const nextIndex = platformVariants.length;
+      const cleanName = formatVariantLabel(undefined, nextIndex);
+      const newVariant = await api.uploadVariant(
+        projectId,
+        file,
+        cleanName,
+        currentPlatform,
+        { setAsActive: false, slotId }
+      );
+
+      const taggedVariant: Variant = {
+        ...newVariant,
+        name: cleanName,
+        platform: currentPlatform,
+        notes: `slot:${slotId}`,
+      };
+
+      saveLocalPlatformState(projectId, (prev) => ({
+        ...prev,
+        variantPlatforms: {
+          ...prev.variantPlatforms,
+          [taggedVariant._id]: currentPlatform,
+        },
+      }));
+
+      // Update customSlotThumbs with secureUrl
+      const secureUrl = taggedVariant.asset?.secureUrl;
+      if (secureUrl) {
+        setCustomSlotThumbs((prev) => {
+          const next = { ...prev, [slotId]: secureUrl };
+          try {
+            window.localStorage.setItem("practiscale_other_video_thumbs_v1", JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+      }
+
+      setProject((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          variants: [...prev.variants, taggedVariant],
+        };
+      });
+
+      setLocalPlatformVersion((v) => v + 1);
+      setSaveStatus(`Saved as ${cleanName}`);
+      setTimeout(() => setSaveStatus("Saved just now"), 1500);
+      return secureUrl;
+    } catch (err: any) {
+      console.error("Failed to upload slot variant:", err);
+      setSaveStatus("Saved locally");
+    }
+  };
+
+  const handleResetSlotThumbnail = (slotId: string) => {
+    setCustomSlotThumbs((prev) => {
+      const next = { ...prev };
+      delete next[slotId];
+      try {
+        window.localStorage.setItem("practiscale_other_video_thumbs_v1", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    // Also remove from project if it was a server variant
+    const linked = project?.variants.find((v) => v.notes === `slot:${slotId}`);
+    if (linked) {
+      api.deleteVariant(linked._id).catch(() => {});
+      setProject((prev) =>
+        prev
+          ? {
+              ...prev,
+              variants: prev.variants.filter((v) => v._id !== linked._id),
+            }
+          : null
+      );
+      setLocalPlatformVersion((v) => v + 1);
+    }
+  };
+
+  // Add new variant scoped to currentPlatform
   const handleVariantAdded = (newVariant: Variant) => {
+    const cleanName = formatVariantLabel(
+      newVariant.name,
+      platformVariants.length,
+    );
+    const taggedVariant: Variant = {
+      ...newVariant,
+      name: cleanName,
+      platform: newVariant.platform || currentPlatform,
+    };
+    saveLocalPlatformState(projectId, (prev) => ({
+      ...prev,
+      variantPlatforms: {
+        ...prev.variantPlatforms,
+        [taggedVariant._id]: currentPlatform,
+      },
+      activeVariantsByPlatform: {
+        ...prev.activeVariantsByPlatform,
+        [currentPlatform]: taggedVariant._id,
+      },
+    }));
+    setLocalPlatformVersion((v) => v + 1);
     setProject((prev) => {
       if (!prev) return null;
       return {
         ...prev,
-        variants: [...prev.variants, newVariant],
+        variants: [...prev.variants, taggedVariant],
       };
     });
-    setActiveVariant(newVariant);
+    setActiveVariant(taggedVariant);
     setSaveStatus("Saved just now");
   };
 
-  // Delete variant
+  // Delete variant (supports both regular and slot variants)
   const handleDeleteVariant = async (variantId: string) => {
     try {
+      if (variantId.startsWith("local-slot-")) {
+        const slotId = variantId.replace("local-slot-", "");
+        handleResetSlotThumbnail(slotId);
+        return;
+      }
+
+      const toDelete = project?.variants.find((v) => v._id === variantId);
+      if (toDelete?.notes?.startsWith("slot:")) {
+        const slotId = toDelete.notes.replace("slot:", "");
+        setCustomSlotThumbs((prev) => {
+          const next = { ...prev };
+          delete next[slotId];
+          try {
+            window.localStorage.setItem("practiscale_other_video_thumbs_v1", JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+      }
+
       await api.deleteVariant(variantId);
       loadProject();
     } catch (err: any) {
@@ -254,6 +538,15 @@ export default function ProjectWorkspacePage() {
     );
   }
 
+  const cleanProjectName = formatProjectTitle(
+    project?.title,
+    "Q4 Brand Launch",
+  );
+  const simulatorBrandName =
+    currentCustomCopy.channelName?.trim() ||
+    DEFAULT_PLATFORM_DUMMY_COPY[currentPlatform].channelName ||
+    cleanProjectName;
+
   const renderSimulator = () => {
     switch (currentPlatform) {
       case "youtube":
@@ -261,39 +554,78 @@ export default function ProjectWorkspacePage() {
           <YouTubeSimulator
             device={device}
             variant={activeVariant}
-            projectName={project?.title}
-            bannerUrl={project?.bannerUrl}
-            logoUrl={project?.logoUrl}
-            shortFrameUrl={project?.shortFrameUrl}
+            projectName={simulatorBrandName}
+            customTitle={currentCustomCopy.title}
+            bannerUrl={currentPlatformAssets.bannerUrl}
+            logoUrl={currentPlatformAssets.logoUrl}
+            customSlotThumbs={customSlotThumbs}
             onUploadBanner={() => simBannerInputRef.current?.click()}
             onUploadLogo={() => simLogoInputRef.current?.click()}
             onUploadThumbnail={() => simThumbInputRef.current?.click()}
-            onUploadShort={() => simShortInputRef.current?.click()}
+            onUploadSlotThumbnail={handleUploadSlotThumbnail}
+            onResetSlotThumbnail={handleResetSlotThumbnail}
           />
         );
       case "instagram":
-        return <InstagramSimulator device={device} variant={activeVariant} />;
-      case "facebook":
-        return <FacebookSimulator device={device} variant={activeVariant} />;
-      case "tiktok":
-        return <TikTokSimulator device={device} variant={activeVariant} />;
-      case "linkedin":
-        return <LinkedInSimulator device={device} variant={activeVariant} />;
-      default:
         return (
-          <YouTubeSimulator
+          <InstagramSimulator
             device={device}
             variant={activeVariant}
-            projectName={project?.title}
-            bannerUrl={project?.bannerUrl}
-            logoUrl={project?.logoUrl}
-            shortFrameUrl={project?.shortFrameUrl}
+            projectName={simulatorBrandName}
+            customTitle={currentCustomCopy.title}
+            logoUrl={currentPlatformAssets.logoUrl}
+            shortFrameUrl={currentPlatformAssets.shortFrameUrl}
+            onUploadLogo={() => simLogoInputRef.current?.click()}
+            onUploadThumbnail={() => simThumbInputRef.current?.click()}
+            onUploadShort={() => simShortInputRef.current?.click()}
+          />
+        );
+      case "facebook":
+        return (
+          <FacebookSimulator
+            device={device}
+            variant={activeVariant}
+            projectName={simulatorBrandName}
+            customTitle={currentCustomCopy.title}
+            bannerUrl={currentPlatformAssets.bannerUrl}
+            logoUrl={currentPlatformAssets.logoUrl}
+            shortFrameUrl={currentPlatformAssets.shortFrameUrl}
             onUploadBanner={() => simBannerInputRef.current?.click()}
             onUploadLogo={() => simLogoInputRef.current?.click()}
             onUploadThumbnail={() => simThumbInputRef.current?.click()}
             onUploadShort={() => simShortInputRef.current?.click()}
           />
         );
+      case "tiktok":
+        return (
+          <TikTokSimulator
+            device={device}
+            variant={activeVariant}
+            projectName={simulatorBrandName}
+            customTitle={currentCustomCopy.title}
+            logoUrl={currentPlatformAssets.logoUrl}
+            shortFrameUrl={currentPlatformAssets.shortFrameUrl}
+            onUploadLogo={() => simLogoInputRef.current?.click()}
+            onUploadThumbnail={() => simThumbInputRef.current?.click()}
+            onUploadShort={() => simShortInputRef.current?.click()}
+          />
+        );
+      case "linkedin":
+        return (
+          <LinkedInSimulator
+            device={device}
+            variant={activeVariant}
+            projectName={simulatorBrandName}
+            customTitle={currentCustomCopy.title}
+            bannerUrl={currentPlatformAssets.bannerUrl}
+            logoUrl={currentPlatformAssets.logoUrl}
+            onUploadBanner={() => simBannerInputRef.current?.click()}
+            onUploadLogo={() => simLogoInputRef.current?.click()}
+            onUploadThumbnail={() => simThumbInputRef.current?.click()}
+          />
+        );
+      default:
+        return null;
     }
   };
 
@@ -307,6 +639,7 @@ export default function ProjectWorkspacePage() {
         onChange={(e) => {
           if (e.target.files && e.target.files[0]) {
             handleUploadAsset("banner", e.target.files[0]);
+            e.target.value = "";
           }
         }}
         className="hidden"
@@ -318,6 +651,7 @@ export default function ProjectWorkspacePage() {
         onChange={(e) => {
           if (e.target.files && e.target.files[0]) {
             handleUploadAsset("logo", e.target.files[0]);
+            e.target.value = "";
           }
         }}
         className="hidden"
@@ -329,6 +663,7 @@ export default function ProjectWorkspacePage() {
         onChange={(e) => {
           if (e.target.files && e.target.files[0]) {
             handleUploadAsset("thumbnail", e.target.files[0]);
+            e.target.value = "";
           }
         }}
         className="hidden"
@@ -340,14 +675,15 @@ export default function ProjectWorkspacePage() {
         onChange={(e) => {
           if (e.target.files && e.target.files[0]) {
             handleUploadAsset("shortFrame", e.target.files[0]);
+            e.target.value = "";
           }
         }}
         className="hidden"
       />
 
-      {/* 1. Global Top Navigation (56px) - Figma Node 82:6 */}
+      {/* 1. Global Top Navigation (56px) */}
       <TopNav
-        projectName={project?.title || "Q4 Brand Launch"}
+        projectName={cleanProjectName}
         onRenameProject={handleRenameProject}
         onOpenShare={() => setIsShareOpen(true)}
         onOpenReviews={() =>
@@ -359,13 +695,17 @@ export default function ProjectWorkspacePage() {
         saveStatus={saveStatus}
       />
 
-      {/* 2. Platform Context Bar (48px) - Figma Node 82:6 */}
+      {/* 2. Platform Context Bar (48px) */}
       <PlatformTabBar
         currentPlatform={currentPlatform}
         onSelectPlatform={handleSelectPlatform}
         currentDevice={device}
         onSelectDevice={(d) => setDevice(d)}
-        activeImageName={activeVariant?.name || "Hero Banner.png"}
+        activeImageName={
+          activeVariant
+            ? formatVariantLabel(activeVariant.name, 0)
+            : `No ${currentPlatform} creative uploaded`
+        }
         onChangeImageClick={() => setIsAddVariantOpen(true)}
         lastTestedText="Last tested 2m ago"
         onRetestClick={() => {
@@ -378,15 +718,25 @@ export default function ProjectWorkspacePage() {
       {/* 3. Main Workspace: Simulator Body + Right Insights Panel */}
       <div className="flex-1 flex overflow-hidden">
         {/* Central Canvas Simulator */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-brand-surface flex flex-col items-center">
-          <div className="w-full max-w-6xl">{renderSimulator()}</div>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 theme-workspace-bg flex flex-col items-center">
+          <div className="w-full max-w-6xl">
+            <SimulatorCopyControl
+              platform={currentPlatform}
+              customTitle={currentCustomCopy.title}
+              customChannelName={currentCustomCopy.channelName}
+              onUpdateCopy={handleUpdateCustomCopy}
+            />
+            {renderSimulator()}
+          </div>
         </main>
 
         {/* Right Fixed Panel: Asset Tracker & Thumbnail Insights & Client Reviews */}
         <ThumbnailInsightsPanel
-          variants={project?.variants || []}
+          variants={platformVariants}
           activeVariant={activeVariant}
           project={project}
+          currentPlatform={currentPlatform}
+          platformAssets={currentPlatformAssets}
           comments={comments}
           currentDevice={device}
           onSwitchDevice={(d) => setDevice(d)}
@@ -406,7 +756,7 @@ export default function ProjectWorkspacePage() {
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
         projectId={projectId}
-        activeVariantId={activeVariant?._id || project?.variants?.[0]?._id}
+        activeVariantId={activeVariant?._id}
         platform={currentPlatform}
         device={device}
       />
@@ -416,14 +766,15 @@ export default function ProjectWorkspacePage() {
         isOpen={isAddVariantOpen}
         onClose={() => setIsAddVariantOpen(false)}
         projectId={projectId}
+        platform={currentPlatform}
         onVariantAdded={handleVariantAdded}
       />
 
       {/* Real-time Floating Live Comment Notification Toast */}
       {newCommentToast && (
         <div className="fixed bottom-6 right-6 z-50 animate-fadeIn">
-          <div className="bg-gray-900/95 backdrop-blur-md text-white border border-[#0ABAB5]/40 rounded-2xl p-4 shadow-2xl max-w-sm flex items-start space-x-3 transition ring-1 ring-[#0ABAB5]/20">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0ABAB5] to-[#089793] flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-sm">
+          <div className="bg-gray-900/95 backdrop-blur-md text-white border border-[#00A67E]/40 rounded-2xl p-4 shadow-2xl max-w-sm flex items-start space-x-3 transition ring-1 ring-[#00A67E]/20">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#00A67E] to-[#008B68] flex items-center justify-center shrink-0 text-white font-bold text-xs shadow-sm">
               <MessageSquare className="w-4 h-4 text-white stroke-[2.5]" />
             </div>
             <div className="flex-1 min-w-0">
@@ -449,7 +800,7 @@ export default function ProjectWorkspacePage() {
                     setInsightsTab("reviews");
                     setNewCommentToast(null);
                   }}
-                  className="text-[11px] font-extrabold text-[#0ABAB5] hover:text-teal-200 flex items-center space-x-1 transition"
+                  className="text-[11px] font-extrabold text-[#00A67E] hover:text-teal-200 flex items-center space-x-1 transition"
                 >
                   <span>Open Client Reviews</span>
                   <ArrowRight className="w-3 h-3" />
