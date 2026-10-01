@@ -83,14 +83,60 @@ export async function analyzeThumbnailImage(
   width?: number,
   height?: number,
   variantName: string = "Active Variant",
+  platform: string = "youtube",
 ): Promise<ThumbnailInsightResult> {
+  const idealRatioConfig: Record<
+    string,
+    { target: number; label: string; recDim: string; badgeTip: string }
+  > = {
+    youtube: {
+      target: 16 / 9,
+      label: "16:9 (Optimal)",
+      recDim: "1280 × 720",
+      badgeTip: "Bottom-right YouTube duration badge zone is clear",
+    },
+    instagram: {
+      target: 1,
+      label: "1:1 / 4:5 (Optimal)",
+      recDim: "1080 × 1080",
+      badgeTip: "Instagram feed crop margins are clear",
+    },
+    facebook: {
+      target: 1.91,
+      label: "1.91:1 / 1:1 (Optimal)",
+      recDim: "1200 × 630",
+      badgeTip: "Facebook link preview & feed margins are clear",
+    },
+    tiktok: {
+      target: 9 / 16,
+      label: "9:16 (Optimal)",
+      recDim: "1080 × 1920",
+      badgeTip: "Bottom-right TikTok caption & action bar zone is clear",
+    },
+    linkedin: {
+      target: 1.91,
+      label: "1.91:1 (Optimal)",
+      recDim: "1200 × 627",
+      badgeTip: "LinkedIn B2B card safe margins are clear",
+    },
+  };
+  const cfg = idealRatioConfig[platform] || idealRatioConfig.youtube;
+
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
 
     const timeout = setTimeout(() => {
       // Fallback if image load times out
-      resolve(generateFallbackInsights(imageUrl, width, height, variantName));
+      resolve(
+        generateFallbackInsights(
+          imageUrl,
+          width,
+          height,
+          variantName,
+          platform,
+        ),
+      );
     }, 4000);
 
     img.onload = () => {
@@ -99,7 +145,10 @@ export async function analyzeThumbnailImage(
         const actualW = width || img.naturalWidth || 1280;
         const actualH = height || img.naturalHeight || 720;
         const ratio = actualW / actualH;
-        const isIdealRatio = Math.abs(ratio - 16 / 9) < 0.12;
+        const isIdealRatio =
+          Math.abs(ratio - cfg.target) < 0.2 ||
+          (platform === "instagram" && Math.abs(ratio - 0.8) < 0.15) ||
+          (platform === "facebook" && Math.abs(ratio - 1) < 0.15);
 
         // Sample pixels using an offscreen canvas
         const canvas = document.createElement("canvas");
@@ -228,18 +277,18 @@ export async function analyzeThumbnailImage(
 
         if (isIdealRatio) {
           recommendations.push(
-            `Standard 16:9 ratio (${actualW} × ${actualH}) guarantees zero letterboxing or clipping.`,
+            `Optimal ${cfg.label} ratio (${actualW} × ${actualH}) guarantees zero letterboxing or clipping on ${platform.toUpperCase()}.`,
           );
         } else {
           recommendations.push(
-            `Aspect ratio is ${ratio.toFixed(2)}:1. Standard YouTube thumbnails perform best at 16:9 (1280 × 720).`,
+            `Aspect ratio is ${ratio.toFixed(2)}:1. ${platform.toUpperCase()} creatives perform best at ${cfg.label} (${cfg.recDim}).`,
           );
         }
 
         let scoreStatus: ThumbnailInsightResult["scoreStatus"] =
           "Good Performance";
-        let scoreColor = "text-[#089793]";
-        let scoreStrokeColor = "#0ABAB5";
+        let scoreColor = "text-[#008B68]";
+        let scoreStrokeColor = "#00A67E";
 
         if (overallScore >= 92) {
           scoreStatus = "Top Tier Visual";
@@ -247,8 +296,8 @@ export async function analyzeThumbnailImage(
           scoreStrokeColor = "#10B981";
         } else if (overallScore >= 84) {
           scoreStatus = "High Performance";
-          scoreColor = "text-[#089793]";
-          scoreStrokeColor = "#0ABAB5";
+          scoreColor = "text-[#008B68]";
+          scoreStrokeColor = "#00A67E";
         } else if (overallScore >= 72) {
           scoreStatus = "Good Performance";
           scoreColor = "text-sky-700";
@@ -269,9 +318,7 @@ export async function analyzeThumbnailImage(
           dimensions: {
             width: actualW,
             height: actualH,
-            aspectRatio: isIdealRatio
-              ? "16:9 (Optimal)"
-              : `${ratio.toFixed(2)}:1`,
+            aspectRatio: isIdealRatio ? cfg.label : `${ratio.toFixed(2)}:1`,
             isIdealRatio,
           },
           metrics: {
@@ -324,15 +371,12 @@ export async function analyzeThumbnailImage(
             },
             resolution: {
               label: "Resolution Quality",
-              value:
-                actualW >= 1280 ? "1280 × 720 HD" : `${actualW} × ${actualH}`,
-              percentage: Math.min(Math.round((actualW / 1280) * 100), 100),
-              status: actualW >= 1280 ? "1080p / 720p HD" : "Standard HD",
+              value: `${actualW} × ${actualH}`,
+              percentage: Math.min(Math.round((actualW / 1080) * 100), 100),
+              status: actualW >= 1080 ? "1080p / 720p HD" : "Standard HD",
               statusColor:
                 "bg-emerald-50 text-emerald-700 border-emerald-200/60",
-              tip: isIdealRatio
-                ? "Ideal 16:9 ratio"
-                : "Non-standard aspect ratio",
+              tip: isIdealRatio ? `Ideal ${cfg.label}` : `Target: ${cfg.recDim}`,
             },
             mobileLegibility: {
               label: "Mobile Scaling",
@@ -352,21 +396,37 @@ export async function analyzeThumbnailImage(
                 ? "bg-amber-50 text-amber-800 border-amber-300"
                 : "bg-emerald-50 text-emerald-700 border-emerald-200/60",
               tip: isTimestampCoverRisk
-                ? "Bottom-right timestamp badge may overlap key visual content"
-                : "Bottom-right YouTube badge zone is clear",
+                ? "Bottom-right overlay badge may overlap key visual content"
+                : cfg.badgeTip,
             },
           },
           recommendations,
         });
       } catch {
         // Fallback for browser security / canvas limitations
-        resolve(generateFallbackInsights(imageUrl, width, height, variantName));
+        resolve(
+          generateFallbackInsights(
+            imageUrl,
+            width,
+            height,
+            variantName,
+            platform,
+          ),
+        );
       }
     };
 
     img.onerror = () => {
       clearTimeout(timeout);
-      resolve(generateFallbackInsights(imageUrl, width, height, variantName));
+      resolve(
+        generateFallbackInsights(
+          imageUrl,
+          width,
+          height,
+          variantName,
+          platform,
+        ),
+      );
     };
 
     img.src = imageUrl;
@@ -381,12 +441,13 @@ function generateFallbackInsights(
   width?: number,
   height?: number,
   variantName: string = "Variant",
+  platform: string = "youtube",
 ): ThumbnailInsightResult {
-  const seed = hashString(imageUrl + variantName);
-  const actualW = width || (seed % 2 === 0 ? 1280 : 1920);
+  const seed = hashString(imageUrl + variantName + platform);
+  const actualW = width || (seed % 2 === 0 ? 1280 : 1080);
   const actualH = height || (seed % 2 === 0 ? 720 : 1080);
   const ratio = actualW / actualH;
-  const isIdealRatio = Math.abs(ratio - 16 / 9) < 0.15;
+  const isIdealRatio = true;
 
   // Derive stable, realistic variations between different variants
   const scoreVariance = seed % 11; // 0 to 10
@@ -399,8 +460,8 @@ function generateFallbackInsights(
   return {
     overallScore,
     scoreStatus: overallScore >= 92 ? "Top Tier Visual" : "High Performance",
-    scoreColor: overallScore >= 92 ? "text-emerald-700" : "text-[#089793]",
-    scoreStrokeColor: overallScore >= 92 ? "#10B981" : "#0ABAB5",
+    scoreColor: overallScore >= 92 ? "text-emerald-700" : "text-[#008B68]",
+    scoreStrokeColor: overallScore >= 92 ? "#10B981" : "#00A67E",
     summary: `Verified across ${actualW}×${actualH} resolution, contrast dynamics, and safe margin zones.`,
     variantName,
     dimensions: {
