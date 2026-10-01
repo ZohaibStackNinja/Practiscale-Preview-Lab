@@ -12,9 +12,19 @@ import {
   Plus,
 } from "lucide-react";
 
-interface LinkedInSimulatorProps {
+export interface LinkedInSimulatorProps {
   device: Device;
   variant: Variant | null;
+  projectName?: string;
+  customTitle?: string;
+  bannerUrl?: string;
+  logoUrl?: string;
+  shortFrameUrl?: string;
+  isReviewMode?: boolean;
+  onUploadBanner?: () => void;
+  onUploadLogo?: () => void;
+  onUploadThumbnail?: () => void;
+  onUploadShort?: () => void;
 }
 
 export const LinkedInSimulator: React.FC<LinkedInSimulatorProps> = ({

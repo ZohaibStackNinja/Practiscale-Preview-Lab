@@ -11,9 +11,19 @@ import {
   Plus,
 } from "lucide-react";
 
-interface TikTokSimulatorProps {
+export interface TikTokSimulatorProps {
   device: Device;
   variant: Variant | null;
+  projectName?: string;
+  customTitle?: string;
+  bannerUrl?: string;
+  logoUrl?: string;
+  shortFrameUrl?: string;
+  isReviewMode?: boolean;
+  onUploadBanner?: () => void;
+  onUploadLogo?: () => void;
+  onUploadThumbnail?: () => void;
+  onUploadShort?: () => void;
 }
 
 export const TikTokSimulator: React.FC<TikTokSimulatorProps> = ({

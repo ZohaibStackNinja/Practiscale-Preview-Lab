@@ -10,9 +10,19 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 
-interface FacebookSimulatorProps {
+export interface FacebookSimulatorProps {
   device: Device;
   variant: Variant | null;
+  projectName?: string;
+  customTitle?: string;
+  bannerUrl?: string;
+  logoUrl?: string;
+  shortFrameUrl?: string;
+  isReviewMode?: boolean;
+  onUploadBanner?: () => void;
+  onUploadLogo?: () => void;
+  onUploadThumbnail?: () => void;
+  onUploadShort?: () => void;
 }
 
 export const FacebookSimulator: React.FC<FacebookSimulatorProps> = ({

@@ -305,57 +305,101 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
     {
       id: "chan-short-2",
       isUser: false,
-      title: "3 Video Mistakes Killing Your CTR 😱 #shorts",
+      title: "When Kim Dokja Meets Naruto 😂 🔥 #anime #shorts",
       views: "1.4M views",
       duration: "0:30",
       gradient: "from-rose-600 via-red-700 to-amber-600",
-      tagline: "CTR KILLER",
+      tagline: "ANIME",
       popularRank: 1,
       defaultThumb: REAL_YOUTUBE_VIDEO_POOL[(ytPoolOffset + 11) % REAL_YOUTUBE_VIDEO_POOL.length].thumbUrl,
     },
     {
       id: "chan-short-3",
       isUser: false,
-      title: "The 2026 Creative Formula you MUST know #shorts",
+      title: "It hurts 🥺 💔 3 Video Mistakes Killing Your CTR #shorts",
       views: "890K views",
       duration: "0:52",
       gradient: "from-emerald-600 via-teal-700 to-cyan-800",
-      tagline: "2026 FORMULA",
-      popularRank: 3,
+      tagline: "CTR KILLER",
+      popularRank: 4,
       defaultThumb: REAL_YOUTUBE_VIDEO_POOL[(ytPoolOffset + 12) % REAL_YOUTUBE_VIDEO_POOL.length].thumbUrl,
     },
     {
       id: "chan-short-4",
       isUser: false,
-      title: "How top editors save 5 hours every day ⚡ #shorts",
+      title: "Reasons To Watch Anime 🥰 💔 #anime #shorts #recommendations",
       views: "640K views",
       duration: "0:25",
       gradient: "from-purple-600 via-indigo-700 to-blue-800",
-      tagline: "5 HOURS SAVED",
-      popularRank: 4,
+      tagline: "MUST WATCH",
+      popularRank: 5,
       defaultThumb: REAL_YOUTUBE_VIDEO_POOL[(ytPoolOffset + 13) % REAL_YOUTUBE_VIDEO_POOL.length].thumbUrl,
     },
     {
       id: "chan-short-5",
       isUser: false,
-      title: "Turn 1 Longform Video into 10 Shorts Fast #shorts",
-      views: "520K views",
+      title: "Denji's Search History 👾 #anime #gojo #luffy #humor",
+      views: "651K views",
       duration: "0:58",
       gradient: "from-amber-600 via-orange-600 to-pink-700",
-      tagline: "REPURPOSE FAST",
-      popularRank: 5,
+      tagline: "SEARCH HISTORY",
+      popularRank: 3,
       defaultThumb: REAL_YOUTUBE_VIDEO_POOL[(ytPoolOffset + 14) % REAL_YOUTUBE_VIDEO_POOL.length].thumbUrl,
     },
     {
       id: "chan-short-6",
       isUser: false,
-      title: "AI Prompts for High-Converting Ad Creative #shorts",
-      views: "415K views",
+      title: "When He Finally Watches Anime 🐱 #shorts #humor #anime",
+      views: "573K views",
       duration: "0:42",
       gradient: "from-cyan-600 via-blue-700 to-indigo-900",
-      tagline: "AI CREATIVE",
+      tagline: "FINALLY",
       popularRank: 6,
       defaultThumb: REAL_YOUTUBE_VIDEO_POOL[(ytPoolOffset + 15) % REAL_YOUTUBE_VIDEO_POOL.length].thumbUrl,
+    },
+    {
+      id: "chan-short-7",
+      isUser: false,
+      title: "How Top Editors Save 5 Hours Every Day ⚡ #editing #shorts",
+      views: "520K views",
+      duration: "0:35",
+      gradient: "from-blue-600 via-indigo-700 to-violet-800",
+      tagline: "PRODUCTIVITY",
+      popularRank: 7,
+      defaultThumb: REAL_YOUTUBE_VIDEO_POOL[(ytPoolOffset + 16) % REAL_YOUTUBE_VIDEO_POOL.length].thumbUrl,
+    },
+    {
+      id: "chan-short-8",
+      isUser: false,
+      title: "Turn 1 Longform Video Into 10 Shorts Fast #repurpose #growth",
+      views: "480K views",
+      duration: "0:48",
+      gradient: "from-teal-600 via-emerald-700 to-green-800",
+      tagline: "SCALE 10X",
+      popularRank: 8,
+      defaultThumb: REAL_YOUTUBE_VIDEO_POOL[(ytPoolOffset + 17) % REAL_YOUTUBE_VIDEO_POOL.length].thumbUrl,
+    },
+    {
+      id: "chan-short-9",
+      isUser: false,
+      title: "AI Prompts for High-Converting Ad Creative #shorts #ai",
+      views: "415K views",
+      duration: "0:29",
+      gradient: "from-fuchsia-600 via-pink-700 to-rose-800",
+      tagline: "AI PROMPTS",
+      popularRank: 9,
+      defaultThumb: REAL_YOUTUBE_VIDEO_POOL[(ytPoolOffset + 18) % REAL_YOUTUBE_VIDEO_POOL.length].thumbUrl,
+    },
+    {
+      id: "chan-short-10",
+      isUser: false,
+      title: "The 2026 Creative Formula You MUST Know #shorts #strategy",
+      views: "380K views",
+      duration: "0:51",
+      gradient: "from-amber-500 via-red-600 to-purple-800",
+      tagline: "FORMULA",
+      popularRank: 10,
+      defaultThumb: REAL_YOUTUBE_VIDEO_POOL[(ytPoolOffset + 19) % REAL_YOUTUBE_VIDEO_POOL.length].thumbUrl,
     },
   ];
 
@@ -376,7 +420,7 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
       gradient: "from-[#00A67E]/20 via-slate-900 to-black",
       defaultThumb: "",
     },
-    ...[8, 9, 10].map((idx, i) => {
+    ...[8, 9, 10, 1, 2, 3, 4, 5].map((idx, i) => {
       const preset = getYtPreset(idx);
       return {
         id: `chan-vid-${i + 2}`,
@@ -385,7 +429,7 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
         views: preset.views,
         time: preset.time,
         duration: preset.duration,
-        popularRank: i === 0 ? 1 : i === 1 ? 3 : 4,
+        popularRank: i === 0 ? 1 : i === 1 ? 3 : i + 3,
         gradient: "from-slate-900 via-gray-900 to-black",
         defaultThumb: preset.thumbUrl,
       };
@@ -2059,36 +2103,38 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
           {/* ================================================================ */}
           {viewMode === "channel" && (
             <div>
-              {/* Channel Banner 16:9 Aspect Header */}
-              <div className="relative aspect-[16/3.5] w-full bg-slate-900 overflow-hidden">
-                {bannerUrl ? (
-                  <img
-                    src={bannerUrl}
-                    alt="Channel Banner"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-r from-teal-900 via-slate-900 to-black flex items-center justify-center text-gray-400 text-sm font-semibold tracking-wide">
-                    2560 × 1440 Channel Banner
-                  </div>
-                )}
-                {isEditable && onUploadBanner && (
-                  <button
-                    onClick={onUploadBanner}
-                    className="absolute top-4 right-4 bg-black/75 hover:bg-black text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-white/20 flex items-center space-x-1.5 transition active:scale-95"
-                  >
-                    <Camera className="w-3.5 h-3.5 text-[#00A67E]" />
-                    <span>Edit Banner</span>
-                  </button>
-                )}
+                        {/* Channel Banner 16:9 Aspect Header */}
+              <div className="px-8 pt-6 pb-2">
+                <div className="relative aspect-[16/3.2] w-full bg-slate-900 rounded-2xl overflow-hidden shadow-xs border border-gray-100">
+                  {bannerUrl ? (
+                    <img
+                      src={bannerUrl}
+                      alt="Channel Banner"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-teal-900 via-slate-900 to-black flex items-center justify-center text-gray-400 text-sm font-semibold tracking-wide">
+                      2560 × 1440 Channel Banner
+                    </div>
+                  )}
+                  {isEditable && onUploadBanner && (
+                    <button
+                      onClick={onUploadBanner}
+                      className="absolute top-4 right-4 bg-black/75 hover:bg-black text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-white/20 flex items-center space-x-1.5 transition active:scale-95 cursor-pointer z-10"
+                    >
+                      <Camera className="w-3.5 h-3.5 text-[#00A67E]" />
+                      <span>Edit Banner</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
-              {/* Channel Meta Information */}
-              <div className="px-8 pt-6 pb-4">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-center space-x-5">
-                    <div className="relative">
-                      <div className="w-24 h-24 rounded-full bg-teal-50 text-[#008B68] font-black text-2xl flex items-center justify-center border-4 border-white shadow-md overflow-hidden">
+              {/* Channel Meta Information (Matches Native YouTube Channel Layout) */}
+              <div className="px-8 pt-4 pb-2">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                  <div className="flex items-start space-x-6">
+                    <div className="relative shrink-0">
+                      <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-teal-50 text-[#008B68] font-black text-3xl flex items-center justify-center border-4 border-white shadow-md overflow-hidden">
                         {logoUrl ? (
                           <img
                             src={logoUrl}
@@ -2102,111 +2148,138 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
                       {isEditable && onUploadLogo && (
                         <button
                           onClick={onUploadLogo}
-                          className="absolute bottom-0 right-0 bg-black text-white p-1.5 rounded-full shadow-md border-2 border-white hover:bg-gray-800 transition"
+                          className="absolute bottom-1 right-1 bg-black text-white p-2 rounded-full shadow-md border-2 border-white hover:bg-gray-800 transition cursor-pointer"
+                          title="Upload/Replace Channel Logo"
                         >
-                          <Camera className="w-3 h-3 text-[#00A67E]" />
+                          <Camera className="w-3.5 h-3.5 text-[#00A67E]" />
                         </button>
                       )}
                     </div>
                     <div>
-                      <h1 className="text-2xl font-black text-gray-900">
-                        {projectName || "PractiScale Studio"}
-                      </h1>
-                      <div className="flex items-center space-x-2 text-xs font-semibold text-gray-600 mt-1">
-                        <span>@{projectName?.toLowerCase().replace(/\s+/g, "") || "practiscale"}</span>
-                        <span>•</span>
-                        <span>840K subscribers</span>
-                        <span>•</span>
-                        <span>142 videos</span>
+                      <div className="flex items-center space-x-2">
+                        <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
+                          {projectName || "Daddy Vyuk"}
+                        </h1>
+                        <CheckCircle2 className="w-5 h-5 text-gray-700 fill-gray-700 shrink-0" />
                       </div>
-                      <p className="text-xs text-gray-600 mt-2 max-w-xl line-clamp-1">
-                        The creative testing, thumbnail packaging, and production velocity lab for top creators.
+                      <div className="flex items-center space-x-2 text-xs font-medium text-gray-600 mt-1.5 flex-wrap">
+                        <span className="font-semibold text-gray-800">@{projectName?.toLowerCase().replace(/\s+/g, "") || "DaddyVyuk"}</span>
+                        <span>•</span>
+                        <span>1.09M subscribers</span>
+                        <span>•</span>
+                        <span>587 videos</span>
+                      </div>
+                      <p className="text-xs text-gray-700 mt-2 max-w-2xl font-normal">
+                        Kon&apos;nichiwaaaa ^_^ <span className="font-semibold text-gray-900 cursor-pointer">...more</span>
                       </p>
+                      <div className="flex items-center space-x-1.5 text-xs text-blue-600 font-semibold mt-1.5">
+                        <span className="text-gray-500 text-sm">🔗</span>
+                        <span className="hover:underline cursor-pointer">
+                          linktr.ee/{projectName?.toLowerCase().replace(/\s+/g, "") || "vyuk"}
+                        </span>
+                        <span className="text-gray-500 font-normal">and 3 more links</span>
+                      </div>
+                      <div className="mt-3.5 flex items-center space-x-2">
+                        <button className="bg-black hover:bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xs transition cursor-pointer">
+                          Subscribe
+                        </button>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <button className="bg-black hover:bg-gray-800 text-white text-xs font-bold px-5 py-2.5 rounded-full shadow transition">
-                      Subscribe
-                    </button>
-                    <button className="border border-gray-300 hover:bg-gray-50 text-gray-800 text-xs font-bold px-4 py-2.5 rounded-full transition">
-                      Join
-                    </button>
                   </div>
                 </div>
 
                 {/* Channel Page Navigation Tabs */}
-                <div className="flex space-x-8 border-b border-gray-200 mt-6 text-sm font-semibold text-gray-500">
-                  <button
-                    onClick={() => setChannelTab("videos")}
-                    className={`pb-2.5 relative whitespace-nowrap transition-colors ${
-                      channelTab === "videos"
-                        ? "text-black font-bold border-b-2 border-black"
-                        : "hover:text-black"
-                    }`}
-                  >
-                    Videos
-                  </button>
-                  <button
-                    onClick={() => setChannelTab("shorts")}
-                    className={`pb-2.5 relative whitespace-nowrap transition-colors ${
-                      channelTab === "shorts"
-                        ? "text-black font-bold border-b-2 border-black"
-                        : "hover:text-black"
-                    }`}
-                  >
-                    Shorts
-                  </button>
-                  <button
-                    onClick={() => setChannelTab("home")}
-                    className={`pb-2.5 relative whitespace-nowrap transition-colors ${
-                      channelTab === "home"
-                        ? "text-black font-bold border-b-2 border-black"
-                        : "hover:text-black"
-                    }`}
-                  >
-                    Home
-                  </button>
-                  <button
-                    onClick={() => setChannelTab("playlists")}
-                    className={`pb-2.5 relative whitespace-nowrap transition-colors ${
-                      channelTab === "playlists"
-                        ? "text-black font-bold border-b-2 border-black"
-                        : "hover:text-black"
-                    }`}
-                  >
-                    Playlists
-                  </button>
+                <div className="flex items-center justify-between border-b border-gray-200 mt-6">
+                  <div className="flex space-x-7 text-sm font-semibold text-gray-600">
+                    <button
+                      onClick={() => setChannelTab("home")}
+                      className={`pb-3 relative whitespace-nowrap transition-colors cursor-pointer ${
+                        channelTab === "home"
+                          ? "text-black font-bold border-b-2 border-black"
+                          : "hover:text-black"
+                      }`}
+                    >
+                      Home
+                    </button>
+                    <button
+                      onClick={() => setChannelTab("videos")}
+                      className={`pb-3 relative whitespace-nowrap transition-colors cursor-pointer ${
+                        channelTab === "videos"
+                          ? "text-black font-bold border-b-2 border-black"
+                          : "hover:text-black"
+                      }`}
+                    >
+                      Videos
+                    </button>
+                    <button
+                      onClick={() => setChannelTab("shorts")}
+                      className={`pb-3 relative whitespace-nowrap transition-colors cursor-pointer ${
+                        channelTab === "shorts"
+                          ? "text-black font-bold border-b-2 border-black"
+                          : "hover:text-black"
+                      }`}
+                    >
+                      Shorts
+                    </button>
+                    <button
+                      onClick={() => setChannelTab("playlists")}
+                      className={`pb-3 relative whitespace-nowrap transition-colors cursor-pointer ${
+                        channelTab === "playlists"
+                          ? "text-black font-bold border-b-2 border-black"
+                          : "hover:text-black"
+                      }`}
+                    >
+                      Playlists
+                    </button>
+                    <button
+                      className="pb-3 text-gray-500 hover:text-black transition-colors hidden sm:block"
+                    >
+                      Posts
+                    </button>
+                  </div>
+                  <Search className="w-4 h-4 text-gray-500 cursor-pointer mr-2 hover:text-gray-900 transition" />
                 </div>
               </div>
 
               {/* TAB 1: VIDEOS */}
               {channelTab === "videos" && (
                 <div className="px-8 py-5">
-                  <div className="flex items-center space-x-2 mb-5">
+                  {/* Filter Chips: Latest, Popular, Oldest */}
+                  <div className="flex items-center space-x-2 mb-6">
                     <button
                       onClick={() => setVideoSort("latest")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                         videoSort === "latest"
-                          ? "bg-black text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          ? "bg-black text-white shadow-xs"
+                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                       }`}
                     >
                       Latest
                     </button>
                     <button
                       onClick={() => setVideoSort("popular")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                         videoSort === "popular"
-                          ? "bg-black text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          ? "bg-black text-white shadow-xs"
+                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                       }`}
                     >
                       Popular
                     </button>
+                    <button
+                      onClick={() => setVideoSort("oldest")}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                        videoSort === "oldest"
+                          ? "bg-black text-white shadow-xs"
+                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                      }`}
+                    >
+                      Oldest
+                    </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* 3 VIDEOS PER ROW GRID (Matches User Screenshot Exact Layout) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8">
                     {sortedChannelVideos.map((video) => {
                       const isUser = video.isUser;
                       const resolvedThumb = isUser
@@ -2219,7 +2292,7 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
                           key={video.id}
                           className="flex flex-col group cursor-pointer"
                         >
-                          <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-sm group-hover:shadow-md transition">
+                          <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-xs group-hover:shadow-md transition">
                             <img
                               src={resolvedThumb}
                               alt={video.title}
@@ -2235,7 +2308,8 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
                                   e.stopPropagation();
                                   onUploadThumbnail();
                                 }}
-                                className="absolute top-2 left-2 bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow border border-white/20 flex items-center space-x-1"
+                                className="absolute top-2.5 left-2.5 bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow border border-white/20 flex items-center space-x-1.5 cursor-pointer z-10"
+                                title="Upload / Replace Thumbnail"
                               >
                                 <Upload className="w-3 h-3 text-[#00A67E]" />
                                 <span>Replace</span>
@@ -2243,11 +2317,12 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
                             )}
 
                             {!isUser && isEditable && (
-                              <div className="absolute top-2 left-2 flex items-center space-x-1">
+                              <div className="absolute top-2.5 right-2.5 flex items-center space-x-1 z-10">
                                 <button
                                   type="button"
                                   onClick={(e) => triggerSlotUpload(video.id, e)}
                                   className="bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow border border-white/20 flex items-center space-x-1 cursor-pointer"
+                                  title="Upload custom thumbnail for this video"
                                 >
                                   <Upload className="w-3 h-3 text-[#00A67E]" />
                                   <span>{hasCustom ? "Replace" : "Upload"}</span>
@@ -2257,20 +2332,26 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
                                     type="button"
                                     onClick={(e) => handleResetSlotThumb(video.id, e)}
                                     className="bg-black/80 hover:bg-rose-600 text-white p-1 rounded-full shadow border border-white/20 cursor-pointer"
+                                    title="Reset to default dummy thumbnail"
                                   >
-                                    <X className="w-2.5 h-2.5" />
+                                    <X className="w-3 h-3" />
                                   </button>
                                 )}
                               </div>
                             )}
                           </div>
-                          <div className="mt-2.5">
-                            <h4 className="text-xs font-bold text-gray-900 line-clamp-2 leading-tight group-hover:text-blue-600">
-                              {video.title}
-                            </h4>
-                            <p className="text-[11px] text-gray-500 mt-1">
-                              {video.views} • {video.time}
-                            </p>
+
+                          {/* Underneath Video Thumbnail: Title with 3-Dots & View/Time info */}
+                          <div className="mt-3 flex items-start justify-between">
+                            <div className="flex-1 min-w-0 pr-2">
+                              <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug group-hover:text-blue-600 transition">
+                                {video.title}
+                              </h4>
+                              <p className="text-xs text-gray-500 mt-1 font-normal">
+                                {video.views} • {video.time}
+                              </p>
+                            </div>
+                            <MoreVertical className="w-4 h-4 text-gray-500 shrink-0 mt-0.5 hover:text-gray-900 transition" />
                           </div>
                         </div>
                       );
@@ -2282,24 +2363,25 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
               {/* TAB 2: SHORTS */}
               {channelTab === "shorts" && (
                 <div className="px-8 py-5">
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => setShortsSort("latest")}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
                           shortsSort === "latest"
-                            ? "bg-black text-white"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            ? "bg-black text-white shadow-xs"
+                            : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                         }`}
                       >
-                        Latest
+                        <span>Latest</span>
+                        <span className="text-[10px]">⌵</span>
                       </button>
                       <button
                         onClick={() => setShortsSort("popular")}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                           shortsSort === "popular"
-                            ? "bg-black text-white"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            ? "bg-black text-white shadow-xs"
+                            : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                         }`}
                       >
                         Popular
@@ -2317,40 +2399,48 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {/* 5 SHORTS PER ROW GRID (Matches User Screenshot 2 Exact Layout) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-7">
                     {/* User's Short */}
-                    <div className="aspect-[9/16] rounded-2xl overflow-hidden bg-slate-900 shadow-sm relative group">
-                      {shortSrc ? (
-                        <img
-                          src={shortSrc}
-                          alt="Your Short"
-                          className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-medium">
-                          Short Asset
+                    <div className="flex flex-col group cursor-pointer">
+                      <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-slate-900 shadow-xs group-hover:shadow-md transition">
+                        {shortSrc ? (
+                          <img
+                            src={shortSrc}
+                            alt="Your Short"
+                            className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-medium">
+                            Short Asset
+                          </div>
+                        )}
+                        {isEditable && onUploadShort && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onUploadShort();
+                            }}
+                            title="Click to upload or replace short"
+                            className="absolute top-2.5 left-2.5 bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2 py-1 rounded-full shadow border border-white/20 flex items-center space-x-1 cursor-pointer z-10"
+                          >
+                            <Upload className="w-2.5 h-2.5 text-[#00A67E]" />
+                            <span>↑ Short</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Title & View Count Underneath Thumbnail (Matches YouTube Desktop) */}
+                      <div className="mt-2.5 flex items-start justify-between">
+                        <div className="flex-1 min-w-0 pr-1.5">
+                          <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug group-hover:text-blue-600 transition">
+                            {videoTitle} #shorts
+                          </h4>
+                          <p className="text-xs text-gray-500 mt-1 font-normal">
+                            320K views
+                          </p>
                         </div>
-                      )}
-                      {isEditable && onUploadShort && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onUploadShort();
-                          }}
-                          title="Click to upload or replace short"
-                          className="absolute top-2.5 left-2.5 bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2 py-1 rounded-full shadow border border-white/20 flex items-center space-x-1 cursor-pointer z-10"
-                        >
-                          <Upload className="w-2.5 h-2.5 text-[#00A67E]" />
-                          <span>↑ Short</span>
-                        </button>
-                      )}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-3 text-white">
-                        <p className="text-xs font-bold line-clamp-2 leading-tight">
-                          {videoTitle} #shorts
-                        </p>
-                        <span className="text-[10px] text-gray-300 mt-1 block">
-                          320K views
-                        </span>
+                        <MoreVertical className="w-4 h-4 text-gray-500 shrink-0 mt-0.5 hover:text-gray-900 transition" />
                       </div>
                     </div>
 
@@ -2363,47 +2453,56 @@ export const YouTubeSimulator: React.FC<YouTubeSimulatorProps> = ({
                         return (
                           <div
                             key={short.id}
-                            className={`aspect-[9/16] rounded-2xl overflow-hidden shadow-sm relative group ${
-                              resolvedThumb ? "bg-slate-900" : `bg-gradient-to-br ${short.gradient}`
-                            }`}
+                            className="flex flex-col group cursor-pointer"
                           >
-                            {resolvedThumb && (
-                              <img
-                                src={resolvedThumb}
-                                alt={short.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
-                              />
-                            )}
-                            {isEditable && (
-                              <div className="absolute top-2 right-2 flex items-center space-x-1 z-10">
-                                <button
-                                  type="button"
-                                  onClick={(e) => triggerSlotUpload(short.id, e)}
-                                  className="bg-black/80 hover:bg-black text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow border border-white/20 flex items-center space-x-1 cursor-pointer"
-                                  title="Upload custom thumbnail for this short"
-                                >
-                                  <Upload className="w-2.5 h-2.5 text-[#00A67E]" />
-                                  <span>{hasCustom ? "Replace" : "Upload"}</span>
-                                </button>
-                                {hasCustom && (
+                            <div
+                              className={`relative aspect-[9/16] rounded-2xl overflow-hidden shadow-xs group-hover:shadow-md transition ${
+                                resolvedThumb ? "bg-slate-900" : `bg-gradient-to-br ${short.gradient}`
+                              }`}
+                            >
+                              {resolvedThumb && (
+                                <img
+                                  src={resolvedThumb}
+                                  alt={short.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition duration-200"
+                                />
+                              )}
+                              {isEditable && (
+                                <div className="absolute top-2 right-2 flex items-center space-x-1 z-10">
                                   <button
                                     type="button"
-                                    onClick={(e) => handleResetSlotThumb(short.id, e)}
-                                    className="bg-black/80 hover:bg-rose-600 text-white p-1 rounded-full shadow border border-white/20 cursor-pointer"
-                                    title="Reset to default dummy thumbnail"
+                                    onClick={(e) => triggerSlotUpload(short.id, e)}
+                                    className="bg-black/80 hover:bg-black text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow border border-white/20 flex items-center space-x-1 cursor-pointer"
+                                    title="Upload custom thumbnail for this short"
                                   >
-                                    <X className="w-2.5 h-2.5" />
+                                    <Upload className="w-2.5 h-2.5 text-[#00A67E]" />
+                                    <span>{hasCustom ? "Replace" : "Upload"}</span>
                                   </button>
-                                )}
+                                  {hasCustom && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleResetSlotThumb(short.id, e)}
+                                      className="bg-black/80 hover:bg-rose-600 text-white p-1 rounded-full shadow border border-white/20 cursor-pointer"
+                                      title="Reset to default dummy thumbnail"
+                                    >
+                                      <X className="w-2.5 h-2.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Title & View Count Underneath Thumbnail */}
+                            <div className="mt-2.5 flex items-start justify-between">
+                              <div className="flex-1 min-w-0 pr-1.5">
+                                <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug group-hover:text-blue-600 transition">
+                                  {short.title}
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1 font-normal">
+                                  {short.views}
+                                </p>
                               </div>
-                            )}
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-3 text-white">
-                              <p className="text-xs font-bold line-clamp-2 leading-tight">
-                                {short.title}
-                              </p>
-                              <span className="text-[10px] text-gray-300 mt-1 block">
-                                {short.views}
-                              </span>
+                              <MoreVertical className="w-4 h-4 text-gray-500 shrink-0 mt-0.5 hover:text-gray-900 transition" />
                             </div>
                           </div>
                         );
