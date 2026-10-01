@@ -110,13 +110,25 @@ export async function createSampleProject(
     ensureSampleAssetsExist();
     const hostUrl = `${req.protocol}://${req.get("host")}`;
 
+    const validPlatforms = [
+      "youtube",
+      "instagram",
+      "facebook",
+      "tiktok",
+      "linkedin",
+    ] as const;
+    const requestedPlatform = req.body?.platform;
+    const targetPlatform = validPlatforms.includes(requestedPlatform)
+      ? requestedPlatform
+      : "youtube";
+
     // Create Sample Project
     const project = await Project.create({
       title: "Q4 Brand Launch",
       status: "active",
     });
 
-    // Create 3 assets & variants
+    // Create 3 assets & variants for the selected platform only
     const sampleSpecs = [
       {
         name: "Launch campaign",
@@ -159,6 +171,7 @@ export async function createSampleProject(
 
       const variant = await Variant.create({
         projectId: project._id,
+        platform: targetPlatform,
         name: spec.name,
         assetId: asset._id,
         notes: spec.notes,
@@ -171,12 +184,17 @@ export async function createSampleProject(
 
       createdVariants.push({
         ...variant.toObject(),
+        platform: targetPlatform,
         asset: asset.toObject(),
       });
     }
 
-    // Set first variant as active
+    // Set first variant as active for targetPlatform
     project.activeVariantId = createdVariants[0]._id as mongoose.Types.ObjectId;
+    project.activeVariantIds = {
+      [targetPlatform]: createdVariants[0]._id as mongoose.Types.ObjectId,
+    };
+    project.markModified("activeVariantIds");
     await project.save();
 
     // Create a sample share link with 24h default using unique token
@@ -187,7 +205,7 @@ export async function createSampleProject(
     const share = await ShareLink.create({
       projectId: project._id,
       variantId: createdVariants[0]._id,
-      platform: "youtube",
+      platform: targetPlatform,
       device: "desktop",
       tokenHash,
       rawToken,

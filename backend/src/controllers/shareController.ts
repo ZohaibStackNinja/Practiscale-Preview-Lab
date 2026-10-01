@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import { ShareLink } from "../models/ShareLink.js";
@@ -30,17 +31,40 @@ export async function createShare(
     }
 
     const validated = createShareSchema.parse(req.body);
-    const variant = await Variant.findById(validated.variantId);
-    if (!variant || variant.projectId.toString() !== projectId) {
-      res.status(400).json({
-        success: false,
-        data: null,
-        error: {
-          code: "INVALID_VARIANT",
-          message: "Selected variant does not belong to project",
-        },
-      });
-      return;
+    let variant = null;
+    const isRealVariantId = Boolean(
+      validated.variantId && mongoose.Types.ObjectId.isValid(validated.variantId)
+    );
+    if (isRealVariantId) {
+      variant = await Variant.findById(validated.variantId);
+      if (!variant || variant.projectId.toString() !== projectId) {
+        res.status(400).json({
+          success: false,
+          data: null,
+          error: {
+            code: "INVALID_VARIANT",
+            message: "Selected variant does not belong to project",
+          },
+        });
+        return;
+      }
+    } else {
+      // Try finding active variant strictly for this platform
+      const platActiveId =
+        project.activeVariantIds?.[validated.platform]?.toString();
+      if (platActiveId && mongoose.Types.ObjectId.isValid(platActiveId)) {
+        variant = await Variant.findOne({
+          _id: platActiveId,
+          projectId: project._id,
+          platform: validated.platform,
+        });
+      }
+      if (!variant) {
+        variant = await Variant.findOne({
+          projectId: project._id,
+          platform: validated.platform,
+        });
+      }
     }
 
     // Generate high-entropy opaque token
@@ -52,7 +76,7 @@ export async function createShare(
 
     const share = await ShareLink.create({
       projectId: project._id,
-      variantId: variant._id,
+      variantId: variant ? variant._id : null,
       platform: validated.platform,
       device: validated.device,
       context: validated.context || "preview",
@@ -140,25 +164,38 @@ export async function getShareByToken(
 
     // Load preview snapshot
     const project = await Project.findById(share.projectId).select(
-      "title status logoUrl bannerUrl shortFrameUrl",
+      "title status logoUrl bannerUrl shortFrameUrl platformAssets",
     );
-    const variant = await Variant.findById(share.variantId);
+    const variant = share.variantId
+      ? await Variant.findById(share.variantId)
+      : null;
     const asset = variant ? await Asset.findById(variant.assetId) : null;
     const comments = await Comment.find({ shareId: share._id }).sort({
       createdAt: 1,
     });
 
+    const platAssets = project?.platformAssets?.[share.platform];
+
     res.json({
       success: true,
       data: {
         shareId: share._id,
+        projectId: project?._id,
         projectTitle: project?.title || "Preview Project",
-        logoUrl: project?.logoUrl,
-        bannerUrl: project?.bannerUrl,
-        shortFrameUrl: project?.shortFrameUrl,
+        logoUrl:
+          platAssets?.logoUrl ||
+          (share.platform === "youtube" ? project?.logoUrl : undefined),
+        bannerUrl:
+          platAssets?.bannerUrl ||
+          (share.platform === "youtube" ? project?.bannerUrl : undefined),
+        shortFrameUrl:
+          platAssets?.shortFrameUrl ||
+          (share.platform === "youtube" ? project?.shortFrameUrl : undefined),
+        platformAssets: project?.platformAssets,
         variant: variant
           ? {
               id: variant._id,
+              platform: variant.platform || share.platform,
               name: variant.name,
               width: variant.width,
               height: variant.height,
