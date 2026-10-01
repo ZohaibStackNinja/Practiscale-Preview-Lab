@@ -56,7 +56,7 @@ export const PlatformTabBar: React.FC<PlatformTabBarProps> = ({
               onClick={() => onSelectPlatform(platformId)}
               className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 isActive
-                  ? "bg-gradient-to-r from-[#0ABAB5] to-[#089793] text-white shadow-sm shadow-[#0ABAB5]/30 ring-1 ring-white/20"
+                  ? "bg-[#00A67E] text-white shadow-sm shadow-[#00A67E]/30 ring-1 ring-white/20"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/80"
               }`}
             >
@@ -115,7 +115,7 @@ export const PlatformTabBar: React.FC<PlatformTabBarProps> = ({
           onClick={onChangeImageClick}
           className="hidden sm:inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-200 shadow-xs hover:border-gray-300 transition-all active:scale-95"
         >
-          <ImageIcon className="w-3.5 h-3.5 text-[#0ABAB5]" />
+          <ImageIcon className="w-3.5 h-3.5 text-[#00A67E]" />
           <span>Change Image</span>
         </button>
 
@@ -127,7 +127,7 @@ export const PlatformTabBar: React.FC<PlatformTabBarProps> = ({
         {/* Re-test Button */}
         <button
           onClick={onRetestClick}
-          className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs text-white bg-gradient-to-r from-[#0ABAB5] to-[#089793] hover:from-[#099E9A] hover:to-[#078581] shadow-xs hover:shadow-sm transition-all active:scale-95 group"
+          className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg font-bold text-xs text-white bg-[#00A67E] hover:bg-[#008B68] shadow-xs hover:shadow-sm transition-all active:scale-95 group"
         >
           <RefreshCw className="w-3.5 h-3.5 transition-transform group-hover:rotate-180 duration-500" />
           <span>Re-test</span>
