@@ -7,6 +7,12 @@ export type Platform =
 
 export type Device = "desktop" | "mobile";
 
+export interface PlatformAssets {
+  logoUrl?: string;
+  bannerUrl?: string;
+  shortFrameUrl?: string;
+}
+
 export interface Asset {
   _id?: string;
   provider: "cloudinary" | "local";
@@ -21,6 +27,7 @@ export interface Asset {
 export interface Variant {
   _id: string;
   projectId: string;
+  platform?: Platform;
   name: string;
   assetId: string;
   notes?: string;
@@ -36,6 +43,9 @@ export interface Project {
   title: string;
   status: "draft" | "active" | "archived";
   activeVariantId?: string;
+  activeVariantIds?: Partial<Record<Platform, string>>;
+  activeVariantsByPlatform?: Partial<Record<Platform, Variant | null>>;
+  platformAssets?: Partial<Record<Platform, PlatformAssets>>;
   logoUrl?: string;
   bannerUrl?: string;
   shortFrameUrl?: string;
@@ -74,12 +84,15 @@ export interface CommentItem {
 
 export interface ShareSnapshot {
   shareId: string;
+  projectId?: string;
   projectTitle: string;
   logoUrl?: string;
   bannerUrl?: string;
   shortFrameUrl?: string;
+  platformAssets?: Partial<Record<Platform, PlatformAssets>>;
   variant: {
     id: string;
+    platform?: Platform;
     name: string;
     width?: number;
     height?: number;
