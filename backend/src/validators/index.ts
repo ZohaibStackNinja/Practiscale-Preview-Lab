@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const platformEnum = z.enum([
+  "youtube",
+  "instagram",
+  "facebook",
+  "tiktok",
+  "linkedin",
+]);
+
 export const createProjectSchema = z.object({
   title: z
     .string()
@@ -11,6 +19,7 @@ export const createProjectSchema = z.object({
 export const updateProjectSchema = z.object({
   title: z.string().min(1).max(120).optional(),
   activeVariantId: z.string().optional(),
+  platform: platformEnum.optional(),
   status: z.enum(["draft", "active", "archived"]).optional(),
   logoUrl: z.string().optional(),
   bannerUrl: z.string().optional(),
@@ -18,13 +27,11 @@ export const updateProjectSchema = z.object({
 });
 
 export const createShareSchema = z.object({
-  variantId: z.string().min(1, "variantId is required"),
-  platform: z
-    .enum(["youtube", "instagram", "facebook", "tiktok", "linkedin"])
-    .default("youtube"),
+  variantId: z.string().optional(),
+  platform: platformEnum.default("youtube"),
   device: z.enum(["desktop", "mobile"]).default("desktop"),
   context: z.string().optional().default("preview"),
-  durationHours: z.number().positive().max(720).default(24), // default 24h (1 day), max 30 days
+  durationHours: z.number().positive().max(720).default(24),
 });
 
 export const createCommentSchema = z.object({
