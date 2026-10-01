@@ -2,54 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-brand-surface text-brand-text-primary antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
+:root {
+  --brand-primary: #00A67E;
+  --brand-primary-hover: #008B68;
+  --brand-surface: #F8FAFB;
+  --brand-card: #FFFFFF;
+  --brand-border: #E2E8F0;
+  --brand-text-primary: #0F172A;
+  --brand-gray: #475569;
+  --brand-muted: #94A3B8;
 }
 
-/* Hide scrollbar utility class */
-.no-scrollbar::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+body {
+  background-color: var(--brand-surface);
+  color: var(--brand-text-primary);
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
-.no-scrollbar {
-  -ms-overflow-style: none !important; /* IE and Edge */
-  scrollbar-width: none !important; /* Firefox */
+/* Subtle architectural grid + soft emerald radial glow matching reference theme */
+.theme-canvas-bg {
+  background-color: #F8FAFB;
+  background-image:
+    radial-gradient(ellipse 80% 55% at 50% -5%, rgba(0, 166, 126, 0.10), transparent 70%),
+    linear-gradient(to right, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 52px 52px, 52px 52px;
+  background-position: center top, center top, center top;
 }
 
-/* Mobile device mockup: hide ALL scrollbars (horizontal & vertical) completely like real phones */
-.mobile-device-viewport,
-.mobile-device-viewport * {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+.theme-workspace-bg {
+  background-color: #F8FAFB;
+  background-image:
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(0, 166, 126, 0.06), transparent 65%),
+    linear-gradient(to right, rgba(15, 23, 42, 0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.028) 1px, transparent 1px);
+  background-size: 100% 100%, 44px 44px, 44px 44px;
 }
 
-.mobile-device-viewport::-webkit-scrollbar,
-.mobile-device-viewport *::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-/* Custom subtle scrollbar for desktop canvases only */
+/* Custom sleek scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #dfe5e6;
-  border-radius: 3px;
+  background: #CBD5E1;
+  border-radius: 9999px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #9aa2a4;
+  background: #94A3B8;
 }
