@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ShareSnapshot, CommentItem, Device } from "@/lib/types";
-import { api } from "@/lib/api";
+import { api, formatProjectTitle, formatVariantLabel } from "@/lib/api";
 import { YouTubeSimulator } from "@/components/simulator/YouTubeSimulator";
 import { InstagramSimulator } from "@/components/simulator/InstagramSimulator";
 import { FacebookSimulator } from "@/components/simulator/FacebookSimulator";
@@ -108,7 +108,7 @@ export default function SharedReviewPage() {
     return (
       <div className="h-screen w-screen bg-brand-surface flex flex-col items-center justify-center space-y-3 select-none">
         <div className="w-12 h-12 rounded-2xl bg-white shadow-card border border-gray-200/80 flex items-center justify-center">
-          <Loader2 className="w-6 h-6 text-[#0ABAB5] animate-spin" />
+          <Loader2 className="w-6 h-6 text-[#00A67E] animate-spin" />
         </div>
         <p className="text-xs font-bold text-gray-700 tracking-tight">
           Loading shared review workspace...
@@ -140,7 +140,7 @@ export default function SharedReviewPage() {
           <div>
             <Link
               href="/"
-              className="inline-block w-full py-3 px-6 rounded-xl bg-gradient-to-r from-[#0ABAB5] to-[#089793] hover:from-[#099E9A] hover:to-[#078581] text-white font-extrabold text-xs transition shadow-xs"
+              className="inline-block w-full py-3 px-6 rounded-xl bg-[#00A67E] hover:bg-[#008B68] text-white font-extrabold text-xs transition shadow-xs"
             >
               Return to PreviewLab
             </Link>
@@ -158,7 +158,7 @@ export default function SharedReviewPage() {
   const mockVariant: any = snapshot.variant
     ? {
         _id: snapshot.variant.id,
-        name: snapshot.variant.name,
+        name: formatVariantLabel(snapshot.variant.name, 0),
         asset: snapshot.variant.asset,
         width: snapshot.variant.width,
         height: snapshot.variant.height,
@@ -166,41 +166,83 @@ export default function SharedReviewPage() {
     : null;
 
   const renderSimulator = () => {
+    const platAssets = snapshot.platformAssets?.[snapshot.platform];
+    const resolvedBanner =
+      platAssets?.bannerUrl ||
+      (snapshot.platform === "youtube" ? snapshot.bannerUrl : undefined);
+    const resolvedLogo =
+      platAssets?.logoUrl ||
+      (snapshot.platform === "youtube" ? snapshot.logoUrl : undefined);
+    const resolvedShort =
+      platAssets?.shortFrameUrl ||
+      (snapshot.platform === "youtube" ? snapshot.shortFrameUrl : undefined);
+
     switch (snapshot.platform) {
       case "youtube":
         return (
           <YouTubeSimulator
             device={activeDevice}
             variant={mockVariant}
-            projectName={snapshot.projectTitle}
-            bannerUrl={snapshot.bannerUrl}
-            logoUrl={snapshot.logoUrl}
-            shortFrameUrl={snapshot.shortFrameUrl}
+            isReviewMode={true}
+            projectName={formatProjectTitle(snapshot.projectTitle, "PractiScale")}
+            bannerUrl={resolvedBanner}
+            logoUrl={resolvedLogo}
           />
         );
       case "instagram":
         return (
-          <InstagramSimulator device={activeDevice} variant={mockVariant} />
+          <InstagramSimulator
+            device={activeDevice}
+            variant={mockVariant}
+            isReviewMode={true}
+            projectName={formatProjectTitle(snapshot.projectTitle, "PractiScale")}
+            logoUrl={resolvedLogo}
+          />
         );
       case "facebook":
         return (
-          <FacebookSimulator device={activeDevice} variant={mockVariant} />
+          <FacebookSimulator
+            device={activeDevice}
+            variant={mockVariant}
+            isReviewMode={true}
+            projectName={formatProjectTitle(snapshot.projectTitle, "PractiScale")}
+            bannerUrl={resolvedBanner}
+            logoUrl={resolvedLogo}
+            shortFrameUrl={resolvedShort}
+          />
         );
       case "tiktok":
-        return <TikTokSimulator device={activeDevice} variant={mockVariant} />;
+        return (
+          <TikTokSimulator
+            device={activeDevice}
+            variant={mockVariant}
+            isReviewMode={true}
+            projectName={formatProjectTitle(snapshot.projectTitle, "PractiScale")}
+            logoUrl={resolvedLogo}
+            shortFrameUrl={resolvedShort}
+          />
+        );
       case "linkedin":
         return (
-          <LinkedInSimulator device={activeDevice} variant={mockVariant} />
+          <LinkedInSimulator
+            device={activeDevice}
+            variant={mockVariant}
+            isReviewMode={true}
+            projectName={formatProjectTitle(snapshot.projectTitle, "PractiScale")}
+            bannerUrl={resolvedBanner}
+            logoUrl={resolvedLogo}
+          />
         );
       default:
         return (
           <YouTubeSimulator
             device={activeDevice}
             variant={mockVariant}
-            projectName={snapshot.projectTitle}
-            bannerUrl={snapshot.bannerUrl}
-            logoUrl={snapshot.logoUrl}
-            shortFrameUrl={snapshot.shortFrameUrl}
+            isReviewMode={true}
+            projectName={formatProjectTitle(snapshot.projectTitle, "PractiScale")}
+            bannerUrl={resolvedBanner}
+            logoUrl={resolvedLogo}
+            shortFrameUrl={resolvedShort}
           />
         );
     }
@@ -222,7 +264,7 @@ export default function SharedReviewPage() {
         {/* Left: Branding & Project Title */}
         <div className="flex items-center space-x-3 min-w-0">
           <Link href="/" className="flex items-center space-x-2 shrink-0 group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#0ABAB5] to-[#08837E] flex items-center justify-center text-white font-black text-sm shadow-xs group-hover:scale-105 transition">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#00A67E] to-[#008B68] flex items-center justify-center text-white font-black text-sm shadow-xs group-hover:scale-105 transition">
               P
             </div>
             <span className="font-black text-sm text-gray-900 tracking-tight hidden md:inline">
@@ -238,7 +280,7 @@ export default function SharedReviewPage() {
               <span>Review Mode</span>
             </span>
             <span className="text-xs font-bold text-gray-900 truncate max-w-[140px] sm:max-w-[240px] md:max-w-[320px]">
-              {snapshot.projectTitle}
+              {formatProjectTitle(snapshot.projectTitle, "Q4 Brand Launch")}
             </span>
           </div>
         </div>
@@ -275,7 +317,7 @@ export default function SharedReviewPage() {
         <div className="flex items-center space-x-2.5 shrink-0">
           {/* Platform Chip */}
           <div className="hidden xl:flex items-center space-x-1.5 text-gray-700 bg-gray-50 px-2.5 py-1 rounded-xl border border-gray-200/80 text-xs font-bold">
-            <Tv className="w-3.5 h-3.5 text-[#0ABAB5]" />
+            <Tv className="w-3.5 h-3.5 text-[#00A67E]" />
             <span className="capitalize">{snapshot.platform}</span>
           </div>
 
@@ -293,7 +335,7 @@ export default function SharedReviewPage() {
             onClick={() => setIsCommentsOpen((prev) => !prev)}
             className={`hidden lg:flex items-center space-x-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 border ${
               isCommentsOpen
-                ? "bg-[#0ABAB5]/10 text-[#08837E] border-[#0ABAB5]/30 shadow-2xs"
+                ? "bg-[#00A67E]/10 text-[#008B68] border-[#00A67E]/30 shadow-2xs"
                 : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
             }`}
             title="Toggle comments panel"
@@ -303,7 +345,7 @@ export default function SharedReviewPage() {
             <span
               className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                 isCommentsOpen
-                  ? "bg-[#0ABAB5] text-white"
+                  ? "bg-[#00A67E] text-white"
                   : "bg-gray-200 text-gray-700"
               }`}
             >
@@ -315,7 +357,7 @@ export default function SharedReviewPage() {
           <button
             type="button"
             onClick={() => setMobileDrawerOpen(true)}
-            className="flex lg:hidden items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#0ABAB5] text-white shadow-xs"
+            className="flex lg:hidden items-center space-x-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[#00A67E] text-white shadow-xs"
           >
             <MessageSquare className="w-3.5 h-3.5" />
             <span>{snapshot.comments?.length || 0}</span>
@@ -330,7 +372,7 @@ export default function SharedReviewPage() {
             Variant:
           </span>
           <span className="font-extrabold text-gray-900 truncate">
-            {snapshot.variant?.name || "Active Creative"}
+            {formatVariantLabel(snapshot.variant?.name, 0)}
           </span>
           {snapshot.variant?.width && snapshot.variant?.height && (
             <span className="text-[11px] text-gray-400 hidden sm:inline">
@@ -340,7 +382,7 @@ export default function SharedReviewPage() {
         </div>
 
         <div className="hidden md:flex items-center space-x-1.5 text-gray-400 text-[11px]">
-          <Sparkles className="w-3 h-3 text-[#0ABAB5]" />
+          <Sparkles className="w-3 h-3 text-[#00A67E]" />
           <span>Click tabs, search, or videos to test live behavior</span>
         </div>
 
@@ -353,7 +395,7 @@ export default function SharedReviewPage() {
       {/* 3. Main Workspace: Center Canvas + Collapsible Feedback Panel */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Central Canvas Simulator */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 flex flex-col items-center justify-start bg-[#F6F8FA] no-scrollbar">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 flex flex-col items-center justify-start theme-workspace-bg no-scrollbar">
           <div
             className={`w-full transition-all duration-300 ${
               activeDevice === "mobile"
@@ -375,7 +417,7 @@ export default function SharedReviewPage() {
               expiresAt={snapshot.expiresAt}
               device={activeDevice}
               platform={snapshot.platform}
-              variantName={snapshot.variant?.name}
+              variantName={formatVariantLabel(snapshot.variant?.name, 0)}
               onClose={() => setIsCommentsOpen(false)}
             />
           </aside>
@@ -387,9 +429,9 @@ export default function SharedReviewPage() {
             onClick={() => setIsCommentsOpen(true)}
             className="hidden lg:flex fixed bottom-6 right-6 z-40 bg-gray-900 hover:bg-black text-white px-4 py-2.5 rounded-2xl shadow-2xl items-center space-x-2.5 text-xs font-extrabold transition-all hover:scale-105 active:scale-95 border border-white/10"
           >
-            <MessageSquare className="w-4 h-4 text-[#0ABAB5]" />
+            <MessageSquare className="w-4 h-4 text-[#00A67E]" />
             <span>Show Feedback</span>
-            <span className="px-1.5 py-0.5 rounded-full bg-[#0ABAB5] text-white text-[10px] font-black">
+            <span className="px-1.5 py-0.5 rounded-full bg-[#00A67E] text-white text-[10px] font-black">
               {snapshot.comments?.length || 0}
             </span>
           </button>
@@ -410,7 +452,7 @@ export default function SharedReviewPage() {
                 expiresAt={snapshot.expiresAt}
                 device={activeDevice}
                 platform={snapshot.platform}
-                variantName={snapshot.variant?.name}
+                variantName={formatVariantLabel(snapshot.variant?.name, 0)}
                 onClose={() => setMobileDrawerOpen(false)}
               />
             </div>
