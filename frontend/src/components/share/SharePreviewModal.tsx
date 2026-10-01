@@ -30,14 +30,17 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isOpen || !projectId || !activeVariantId) return;
+    if (!isOpen || !projectId) return;
 
     const createOrFetch = async () => {
       setLoading(true);
       setError(null);
       try {
+        const isRealVariantId = Boolean(
+          activeVariantId && /^[0-9a-fA-F]{24}$/.test(activeVariantId)
+        );
         const share = await api.createShare(projectId, {
-          variantId: activeVariantId,
+          ...(isRealVariantId ? { variantId: activeVariantId } : {}),
           platform,
           device,
           durationHours,
@@ -135,7 +138,7 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
         </div>
 
         <div>
-          <div className="flex items-center space-x-2 border border-gray-200 rounded-2xl p-1.5 bg-gray-50 focus-within:border-[#0ABAB5] focus-within:bg-white transition-all shadow-xs">
+          <div className="flex items-center space-x-2 border border-gray-200 rounded-2xl p-1.5 bg-gray-50 focus-within:border-[#00A67E] focus-within:bg-white transition-all shadow-xs">
             <input
               type="text"
               readOnly
@@ -157,7 +160,7 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
               className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition active:scale-95 shadow-xs disabled:opacity-40 disabled:cursor-not-allowed ${
                 copied
                   ? "bg-emerald-600 text-white shadow-emerald-500/20"
-                  : "bg-gradient-to-r from-[#0ABAB5] to-[#089793] hover:from-[#099E9A] hover:to-[#078581] text-white"
+                  : "bg-[#00A67E] hover:bg-[#008B68] text-white"
               }`}
             >
               {copied ? (
@@ -189,7 +192,7 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
             value={durationHours}
             onChange={(e) => setDurationHours(Number(e.target.value))}
             disabled={loading || shareData?.isRevoked}
-            className="text-xs font-semibold bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-800 outline-none focus:border-[#0ABAB5] cursor-pointer shadow-xs"
+            className="text-xs font-semibold bg-white border border-gray-200 rounded-xl px-3 py-2 text-gray-800 outline-none focus:border-[#00A67E] cursor-pointer shadow-xs"
           >
             <option value={1}>1 hour</option>
             <option value={12}>12 hours</option>
@@ -221,7 +224,7 @@ export const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
               </div>
             ) : loading ? (
               <div className="flex items-center space-x-1.5 text-gray-500 text-xs font-medium">
-                <span className="w-2 h-2 rounded-full bg-[#0ABAB5] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#00A67E] animate-pulse" />
                 <span>Generating preview link...</span>
               </div>
             ) : null}
