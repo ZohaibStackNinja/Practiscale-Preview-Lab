@@ -88,13 +88,13 @@ export const GuestCommentPanel: React.FC<GuestCommentPanelProps> = ({
       {/* Panel Header */}
       <div className="p-4 border-b border-gray-150 flex items-center justify-between shrink-0 bg-white">
         <div className="flex items-center space-x-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#0ABAB5] to-[#08837E] flex items-center justify-center text-white shadow-xs">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#00A67E] to-[#008B68] flex items-center justify-center text-white shadow-xs">
             <MessageSquare className="w-3.5 h-3.5" />
           </div>
           <div>
             <h3 className="text-xs font-black text-gray-900 tracking-tight flex items-center space-x-1.5">
               <span>Review Feedback</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-[#0ABAB5]/10 text-[#08837E] text-[10px] font-bold">
+              <span className="px-1.5 py-0.5 rounded-full bg-[#00A67E]/10 text-[#008B68] text-[10px] font-bold">
                 {comments.length}
               </span>
             </h3>
@@ -134,7 +134,7 @@ export const GuestCommentPanel: React.FC<GuestCommentPanelProps> = ({
         {comments.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 my-auto">
             <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 mb-3 shadow-2xs">
-              <Sparkles className="w-5 h-5 text-[#0ABAB5]" />
+              <Sparkles className="w-5 h-5 text-[#00A67E]" />
             </div>
             <p className="text-xs font-bold text-gray-800">No feedback yet</p>
             <p className="text-[11px] mt-1 text-gray-500 max-w-[200px] leading-relaxed">
@@ -244,7 +244,7 @@ export const GuestCommentPanel: React.FC<GuestCommentPanelProps> = ({
               placeholder="Your name or organization (optional)"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#0ABAB5] focus:bg-white transition placeholder:text-gray-400 text-gray-800"
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#00A67E] focus:bg-white transition placeholder:text-gray-400 text-gray-800"
             />
           </div>
 
@@ -254,7 +254,7 @@ export const GuestCommentPanel: React.FC<GuestCommentPanelProps> = ({
               placeholder="Leave feedback, revision notes, or approval..."
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              className="w-full p-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#0ABAB5] focus:bg-white transition resize-none placeholder:text-gray-400 text-gray-800 leading-relaxed"
+              className="w-full p-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#00A67E] focus:bg-white transition resize-none placeholder:text-gray-400 text-gray-800 leading-relaxed"
             />
           </div>
 
@@ -272,7 +272,7 @@ export const GuestCommentPanel: React.FC<GuestCommentPanelProps> = ({
             <button
               type="submit"
               disabled={!body.trim() || submitting}
-              className="px-4 py-1.5 bg-gradient-to-r from-[#0ABAB5] to-[#089793] hover:from-[#099E9A] hover:to-[#078581] disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 transition active:scale-95 shadow-xs cursor-pointer"
+              className="px-4 py-1.5 bg-[#00A67E] hover:bg-[#008B68] disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 transition active:scale-95 shadow-xs cursor-pointer"
             >
               {submitting ? (
                 <>
